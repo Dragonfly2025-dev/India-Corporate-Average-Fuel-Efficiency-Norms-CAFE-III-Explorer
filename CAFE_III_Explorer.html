@@ -1,0 +1,865 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CAFE III Fleet Explorer</title>
+<meta name="description" content="Scenario explorer for India's CAFE III (2027-32) passenger-car fuel economy norms: target, fleet performance, gap, passbook and portfolio comparison.">
+<style>
+:root{--bg:#f3f5f8;--card:#fff;--ink:#0f172a;--ink2:#334155;--muted:#64748b;--line:#e2e8f0;--soft:#f1f5f9;--accent:#0b5cad;--accent-soft:#e7f0fb;--good:#15803d;--good-soft:#dcfce7;--bad:#c81e1e;--bad-soft:#fee2e2;--tline:#0f172a;--perf:#0b5cad;--shadow:0 1px 2px rgba(15,23,42,.05),0 2px 6px rgba(15,23,42,.04)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a101c;--card:#111a2a;--ink:#e6eaf1;--ink2:#c3cad6;--muted:#8d9aae;--line:#223049;--soft:#17223a;--accent:#62a8f5;--accent-soft:#15294a;--good:#4ade80;--good-soft:#11301f;--bad:#f87171;--bad-soft:#3b1518;--tline:#e6eaf1;--perf:#62a8f5;--shadow:none}}
+:root[data-theme="dark"]{--bg:#0a101c;--card:#111a2a;--ink:#e6eaf1;--ink2:#c3cad6;--muted:#8d9aae;--line:#223049;--soft:#17223a;--accent:#62a8f5;--accent-soft:#15294a;--good:#4ade80;--good-soft:#11301f;--bad:#f87171;--bad-soft:#3b1518;--tline:#e6eaf1;--perf:#62a8f5;--shadow:none}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+.num,.val{font-variant-numeric:tabular-nums}
+.app{max-width:1440px;margin:0 auto;padding:16px 20px 24px}
+h1{font-size:20px;line-height:1.2;margin:0;font-weight:700;letter-spacing:-.01em}
+h2{font-size:13px;margin:0;font-weight:650;text-transform:uppercase;letter-spacing:.04em;color:var(--ink2)}
+.top{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;justify-content:space-between;margin-bottom:14px}
+.brand p{margin:3px 0 0;color:var(--muted);font-size:12.5px}
+.badge-ed{display:inline-block;margin-left:8px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);vertical-align:middle}
+.ctrls{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.fld{display:flex;flex-direction:column;gap:4px}
+.fld>span{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+select,input[type=number],input[type=text],.btn{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;min-height:36px;padding:6px 10px}
+input:disabled{opacity:.5}
+select{padding-right:28px;cursor:pointer}
+.btn{cursor:pointer;font-weight:550;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.sm{min-height:28px;padding:2px 9px;font-size:12px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--card)}
+.seg button{font:inherit;font-size:13px;border:0;background:none;color:var(--ink2);padding:7px 11px;min-height:34px;cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed=true]{background:var(--accent);color:#fff;font-weight:650}
+.seg.sm button{font-size:12px;padding:5px 10px;min-height:30px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);min-width:0}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.card-h .l,.hd-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);min-width:0;position:relative}
+.kpi.state-ok{border-color:color-mix(in srgb,var(--good) 45%,var(--line));background:linear-gradient(0deg,var(--good-soft),var(--card) 70%)}
+.kpi.state-bad{border-color:color-mix(in srgb,var(--bad) 45%,var(--line));background:linear-gradient(0deg,var(--bad-soft),var(--card) 70%)}
+.kl{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.val{font-size:24px;font-weight:700;line-height:1.15;margin-top:4px;letter-spacing:-.01em;white-space:nowrap}
+.val small{font-size:12px;font-weight:550;color:var(--muted);margin-left:3px}
+.g{font-size:13px;color:var(--ink2);margin-top:1px;white-space:nowrap}
+.sub{font-size:11.5px;color:var(--muted);margin-top:4px}
+.delta{display:inline-block;font-size:11px;font-weight:600;margin-top:4px;padding:1px 6px;border-radius:6px;background:var(--soft);color:var(--ink2)}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:3px}
+.pill.ok{background:var(--good-soft);color:var(--good)}.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.good{color:var(--good)}.bad{color:var(--bad)}.mut{color:var(--muted)}
+.main{display:grid;grid-template-columns:minmax(330px,370px) minmax(0,1fr);gap:16px;align-items:start}
+.side{display:grid;gap:16px}
+.charts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.wide{grid-column:1/-1}
+.tip{position:relative;display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;border:1px solid var(--muted);color:var(--muted);font-size:10px;font-weight:700;font-style:normal;cursor:help;text-transform:none;letter-spacing:0;flex:none}
+.tip:hover::after,.tip:focus::after{content:attr(data-tip);position:absolute;z-index:30;top:20px;left:50%;transform:translateX(-50%);width:max-content;max-width:260px;background:var(--ink);color:var(--card);font-size:12px;font-weight:450;line-height:1.4;padding:8px 10px;border-radius:8px;white-space:normal;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.kpi:first-child .tip:hover::after,.kpi:first-child .tip:focus::after,.side .tip:hover::after,.side .tip:focus::after{left:0;transform:none}
+.kpi:last-child .tip:hover::after,.kpi:last-child .tip:focus::after{left:auto;right:0;transform:none}
+.fldrow{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;color:var(--ink2);margin:0 0 10px}
+.fldrow input{width:120px;text-align:right}
+.fldrow .u{display:flex;align-items:center;gap:6px}
+.fldrow .u input{width:76px}
+.mixbar{display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--soft);margin:2px 0 4px}
+.mixbar span{display:block;height:100%;transition:width .12s}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 54px 22px;grid-template-rows:auto auto;column-gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.row .nm{display:flex;align-items:center;gap:7px;font-weight:600;font-size:13px;min-width:0}
+.row .nm b{display:block;width:10px;height:10px;border-radius:3px;flex:none}
+.row .nm span{white-space:nowrap}
+.row .nm em{font-style:normal;font-weight:450;color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .pc{text-align:right;font-weight:700;font-size:13px}
+.row .rm{border:0;background:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;padding:0;min-height:22px}
+.row .rm:hover{color:var(--bad)}
+.row input[type=range]{grid-column:1/-1;width:100%;margin:6px 0 0;accent-color:var(--rc,var(--accent));height:22px}
+.addrow{display:flex;gap:8px;margin-top:8px}
+.addrow select,.addrow input{flex:1;font-size:13px;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.chip{font:inherit;font-size:12.5px;font-weight:550;border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:999px;padding:5px 11px;cursor:pointer;min-height:32px}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.msg{font-size:12px;color:var(--muted);min-height:16px;margin-top:6px}
+.switch{position:relative;display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);cursor:pointer}
+.switch input{position:absolute;opacity:0;width:1px;height:1px}
+.switch i{width:34px;height:20px;border-radius:999px;background:var(--line);position:relative;transition:.15s}
+.switch i::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.switch input:checked+i{background:var(--accent)}
+.switch input:checked+i::after{left:16px}
+.switch input:focus-visible+i{outline:2px solid var(--accent);outline-offset:2px}
+.techs{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px}
+.techs label{display:flex;align-items:flex-start;gap:7px;font-size:12.5px;padding:5px 0;cursor:pointer;line-height:1.3}
+.techs input{margin:1px 0 0;accent-color:var(--accent);width:15px;height:15px;flex:none}
+.techs.off{opacity:.45;pointer-events:none}
+.techs sup{color:var(--muted);font-size:10px}
+.hint{font-size:12px;color:var(--ink2);background:var(--soft);border-radius:8px;padding:7px 10px;margin:0 0 8px}
+.chart{width:100%;position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{font-family:inherit}
+.ax{fill:var(--muted);font-size:11px}
+.axl{stroke:var(--line)}
+.res{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;margin-top:8px;padding:8px 10px;border-radius:8px;background:var(--soft)}
+.res b{font-weight:700}
+.res .btn{min-height:30px;padding:3px 10px;font-size:12.5px;margin-left:auto}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--ink2)}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.note{font-size:12px;color:var(--muted);margin:8px 0 0}
+.blocks{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.blocks div{background:var(--soft);border-radius:8px;padding:7px 10px;font-size:12px;color:var(--ink2)}
+.blocks b{display:block;font-size:13.5px;margin-top:2px}
+.sec{margin-top:16px}
+.cmpgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:16px;align-items:start}
+.cmpgrid>div{min-width:0}
+.cands{display:flex;flex-wrap:wrap;gap:6px}
+.cand{font:inherit;font-size:12.5px;font-weight:550;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);color:var(--ink2);border-radius:999px;padding:5px 11px;cursor:pointer;min-height:32px}
+.cand b{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--muted);flex:none}
+.cand[aria-pressed=true]{border-color:var(--cc);color:var(--ink);background:color-mix(in srgb,var(--cc) 12%,var(--card))}
+.cand[aria-pressed=true] b{background:var(--cc);border-color:var(--cc)}
+.sw{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:0}
+.slist{display:grid;gap:6px;margin-top:10px}
+.sitem{display:flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;font-size:12.5px}
+.sitem .sn{flex:1;min-width:0}
+.sitem .sn b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sitem .sn span{color:var(--muted);font-size:11.5px}
+.method summary{cursor:pointer;font-weight:650;font-size:14px;list-style:none;display:flex;align-items:center;gap:8px}
+.method summary::-webkit-details-marker{display:none}
+.method summary::before{content:"▸";color:var(--muted);transition:.15s}
+.method details[open] summary::before{transform:rotate(90deg)}
+.mgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:16px;margin-top:12px}
+.eq{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;background:var(--soft);border-radius:8px;padding:8px 10px;margin:6px 0;overflow-x:auto;white-space:nowrap}
+.mlist{margin:8px 0 0;padding-left:18px;font-size:12.5px;color:var(--ink2)}
+.mlist li{margin:3px 0}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{background:var(--soft);font-weight:650;color:var(--ink2);font-size:11.5px}
+tbody tr:last-child td{border-bottom:0}
+td input{width:72px;min-height:28px;padding:3px 6px;text-align:right;font-size:12.5px}
+.privgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.trace p{margin:4px 0;font-size:12.5px}
+.chk{font-size:12.5px;margin:3px 0}
+footer{margin-top:18px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 20px}
+footer a{color:var(--accent);font-weight:600;text-decoration:none}
+footer a:hover{text-decoration:underline}
+#report{display:none}
+@media (max-width:1240px){.kpis .val{font-size:21px}}
+@media (max-width:1180px){.charts,.mgrid,.cmpgrid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:900px){
+ .main{grid-template-columns:1fr}
+ .privgrid{grid-template-columns:1fr}
+ .kpis{position:sticky;top:0;z-index:20;margin:0 -20px 14px;padding:8px 20px;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;overflow-x:auto;gap:8px;scroll-snap-type:x mandatory;scrollbar-width:none}
+ .kpis::-webkit-scrollbar{display:none}
+ .kpi{flex:0 0 auto;min-width:148px;padding:8px 11px;scroll-snap-align:start}
+ .kpi .val{font-size:18px}.kpi .g{font-size:12px}.kpi .sub{display:none}
+ .kpi .tip{display:none}
+ .kpi:nth-child(4){order:-2}.kpi:nth-child(5){order:-1;min-width:230px;max-width:250px}
+ .kpi:nth-child(5) .sub{display:block;white-space:normal}
+}
+@media (max-width:560px){
+ .app{padding:12px 14px 20px}
+ .kpis{margin:0 -14px 12px;padding:8px 14px}
+ h1{font-size:18px}
+ .ctrls{width:100%}
+ .ctrls .fld:first-child{flex:1 1 100%}
+ .ctrls select{width:100%}
+ .seg button{padding:7px 9px}
+ .techs{grid-template-columns:1fr}
+ .blocks{grid-template-columns:1fr}
+ .card{padding:12px}
+}
+/* ---------- print report ---------- */
+.rp{font-size:11px;line-height:1.4;color:#0f172a}
+.rp h1{font-size:19px;margin:0 0 2px}
+.rp h2{font-size:11.5px;margin:16px 0 6px;color:#334155;border-bottom:1px solid #d5dce6;padding-bottom:3px}
+.rp .meta{color:#64748b;font-size:10.5px}
+.rp .kg{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.rp .k{border:1px solid #d5dce6;border-radius:6px;padding:6px 8px}
+.rp .k span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.04em;color:#64748b}
+.rp .k b{font-size:14px}
+.rp table{font-size:10px}
+.rp th,.rp td{padding:3px 6px}
+.rp .fig{break-inside:avoid;margin:6px 0 10px}
+.rp .fig p{margin:0 0 4px;font-weight:650;font-size:10.5px}
+.rp svg{width:100%!important;height:auto!important;max-height:88mm}
+.rp .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rp ul{margin:4px 0;padding-left:16px}
+.rp .sec2{break-inside:avoid}
+@media print{
+ html:not(#_){--bg:#fff;--card:#fff;--ink:#0f172a;--ink2:#334155;--muted:#64748b;--line:#d5dce6;--soft:#f1f5f9;--accent:#0b5cad;--accent-soft:#e7f0fb;--good:#15803d;--good-soft:#dcfce7;--bad:#c81e1e;--bad-soft:#fee2e2;--tline:#0f172a;--perf:#0b5cad;--shadow:none}
+ body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .app{display:none!important}
+ #report{display:block}
+ @page{size:A4;margin:13mm}
+}
+</style>
+</head>
+<body>
+<div class="app">
+ <header class="top">
+  <div class="brand">
+   <h1>CAFE III Fleet Compliance Explorer<span class="badge-ed priv">Private edition</span></h1>
+   <p>India M1 passenger cars · FY 2027-28 to FY 2031-32 · MoP S.O. 5346(E), 29 Sep 2026</p>
+  </div>
+  <div class="ctrls">
+   <label class="fld"><span>Portfolio</span><select id="preset" aria-label="Portfolio preset"></select></label>
+   <div class="fld"><span>Year</span><div class="seg" id="years" role="group" aria-label="Financial year"></div></div>
+   <button class="btn" id="theme" type="button" aria-label="Switch colour theme">Theme: Auto</button>
+   <button class="btn" id="pdf" type="button">PDF report</button>
+   <button class="btn priv" id="xlsx" type="button">Excel model</button>
+   <button class="btn" id="reset" type="button">Reset</button>
+  </div>
+ </header>
+
+ <section class="kpis" id="kpis" aria-live="polite"></section>
+
+ <div class="main">
+  <aside class="side">
+   <div class="card">
+    <div class="card-h"><div class="l"><h2>Sales mix</h2><i class="tip" tabindex="0" data-tip="Share of physical sales. Move one slider and the others rebalance proportionally. Super-credits weight the average only; they don't change sales.">i</i></div>
+     <div class="seg sm" id="editSeg" role="group" aria-label="Mix being edited" hidden><button type="button" data-e="start">Start 2027-28</button><button type="button" data-e="end">End 2031-32</button></div></div>
+    <label class="fldrow"><span id="salesLbl">Annual sales (vehicles)</span><input id="sales" type="number" min="1000" step="10000" inputmode="numeric"></label>
+    <div class="mixbar" id="mixbar" aria-hidden="true"></div>
+    <div class="note" id="mixNote" style="margin:0 0 4px"></div>
+    <div id="rows"></div>
+    <div class="addrow"><select id="addpt" aria-label="Add powertrain"></select></div>
+    <div class="chips" id="chips">
+     <button class="chip" data-a="bev10" type="button">+10 pts Battery EV</button>
+     <button class="chip" data-a="cng" type="button">10 pts Petrol → CNG</button>
+     <button class="chip" data-a="hyb" type="button">Strong hybrid 20%</button>
+     <button class="chip" data-a="dsl" type="button">Halve diesel</button>
+     <button class="chip" data-a="pin" id="pinbtn" type="button">Pin baseline</button>
+    </div>
+    <div class="msg" id="msg" aria-live="polite"></div>
+   </div>
+   <div class="card">
+    <div class="card-h"><div class="l"><h2>Year-wise plan</h2><i class="tip" tabindex="0" data-tip="Turn on to set a start mix (FY 2027-28) and an end mix (FY 2031-32). The mix moves in a straight line between them; CO₂ improvement and sales growth compound each year.">i</i></div>
+     <label class="switch"><input type="checkbox" id="trajOn"><i></i><span>On</span></label></div>
+    <label class="fldrow"><span>CO₂ improvement per year</span><span class="u"><input id="imp" type="number" min="0" max="10" step="0.5" inputmode="decimal">%</span></label>
+    <label class="fldrow"><span>Sales growth per year</span><span class="u"><input id="gr" type="number" min="-20" max="30" step="1" inputmode="decimal">%</span></label>
+    <p class="hint" id="trajHint" style="margin:0"></p>
+   </div>
+   <div class="card">
+    <div class="card-h"><div class="l"><h2>Fuel-saving tech</h2><i class="tip" tabindex="0" data-tip="Table 1.3 technologies. 1 g CO₂/km (0.0422 L/100 km) each, capped at 9 g/km per vehicle. Self-declared in Block 1; Block 2 claims need MoRTH-validated tests.">i</i></div>
+     <label class="switch"><input type="checkbox" id="techOn" checked><i></i><span>Apply</span></label></div>
+    <p class="hint num" id="techHint"></p>
+    <div class="techs" id="techs"></div>
+    <p class="note">* Engine-related: not credited to battery EVs (assumption; the Gazette doesn't specify).</p>
+   </div>
+   <div class="card priv">
+    <div class="card-h"><div class="l"><h2>Saved scenarios</h2><i class="tip" tabindex="0" data-tip="Saved in this browser only. Saved scenarios appear in Compare and in the Excel export.">i</i></div></div>
+    <div class="addrow" style="margin-top:0"><input id="scName" type="text" maxlength="60" placeholder="Name this scenario" aria-label="Scenario name"><button class="btn pri" id="scSave" type="button">Save</button></div>
+    <div class="slist" id="slist"></div>
+    <div class="msg" id="smsg" aria-live="polite"></div>
+   </div>
+  </aside>
+
+  <section class="charts" id="charts">
+   <div class="card wide">
+    <div class="card-h">
+     <div class="l"><h2>Break-even finder</h2><i class="tip" tabindex="0" data-tip="Sweeps one powertrain from 0% to 100% of sales (others scale proportionally). The target moves with fleet mass; performance moves with the powertrain mix.">i</i></div>
+     <div class="hd-r"><label class="fld" style="flex-direction:row;align-items:center;gap:8px"><span>Vary</span><select id="sweep" aria-label="Powertrain to vary"></select></label><button class="btn sm" type="button" data-png="c1" data-title="Break-even finder">PNG</button></div>
+    </div>
+    <div class="legend"><span><i style="background:var(--tline)"></i>Target</span><span><i style="background:var(--perf)"></i>Fleet performance</span><span><i style="background:var(--good);height:6px"></i>Complies</span><span><i style="background:var(--bad);height:6px"></i>Shortfall</span></div>
+    <div class="chart" id="c1"></div>
+    <div class="res" id="be"></div>
+   </div>
+   <div class="card">
+    <div class="card-h" style="margin-bottom:2px"><div class="l"><h2>What drives the gap</h2><i class="tip" tabindex="0" data-tip="Adjusted petrol-equivalent consumption of each powertrain after CNF and tech credits, against the fleet target. 'Weight' is its share of the average after super-credits.">i</i></div><button class="btn sm" type="button" data-png="c2" data-title="What drives the gap">PNG</button></div>
+    <p class="note" style="margin:0 0 8px">Adjusted fuel use per vehicle · L/100 km petrol-equivalent (g CO₂/km)</p>
+    <div class="chart" id="c2"></div>
+   </div>
+   <div class="card">
+    <div class="card-h"><div class="l"><h2>Glide path FY 2027-28 → 2031-32</h2><i class="tip" tabindex="0" data-tip="Each year's mix tested against that year's target. Credits and debits carry forward only within a block and lapse at block end. Tap a bar to switch year.">i</i></div><button class="btn sm" type="button" data-png="c3" data-title="Glide path, gap to target (g CO₂/km)">PNG</button></div>
+    <div class="chart" id="c3"></div>
+    <div class="blocks" id="blocks"></div>
+   </div>
+  </section>
+ </div>
+
+ <section class="card sec" id="cmpcard">
+  <div class="card-h">
+   <div class="l"><h2>Compare portfolios</h2><i class="tip" tabindex="0" data-tip="Pick up to 4. Each portfolio keeps its own mix, mass, CO₂ and tech. The table uses the selected year; super-credit lift is how much the multipliers improve the gap.">i</i></div>
+   <div class="hd-r"><label class="switch priv"><input type="checkbox" id="poolOn"><i></i><span>Pool passbooks</span></label><button class="btn sm" type="button" data-png="c4" data-title="Compare portfolios, gap to target (g CO₂/km)">PNG</button></div>
+  </div>
+  <div class="cands" id="cands"></div>
+  <div class="msg" id="cmpMsg"></div>
+  <div class="cmpgrid">
+   <div><p class="note" style="margin:0 0 6px">Gap to target by year · g CO₂/km (above 0 = complies)</p><div class="chart" id="c4"></div></div>
+   <div><div class="tw"><table id="cmpTab"></table></div><p class="note priv" id="poolNote"></p></div>
+  </div>
+ </section>
+
+ <section class="card sec method">
+  <details id="method">
+   <summary>Method, factors and assumptions</summary>
+   <div class="mgrid">
+    <div>
+     <div class="eq">W = Σ nᵢWᵢ / Σ nᵢ</div>
+     <div class="eq">Target T = a × (W − 1229) + c</div>
+     <div class="eq">P = Σ vᵢnᵢ [FCᵢ(1 − CNFᵢ) − cᵢ] / Σ vᵢnᵢ</div>
+     <div class="eq">g CO₂/km = L/100 km × 23.7135</div>
+     <div class="eq">Passbook entry = (T − P) g/km × Σnᵢ</div>
+     <ul class="mlist" id="notes">
+      <li>T and P are rounded to three decimals before comparison. MIDC basis; the WLTP conversion is yet to be notified.</li>
+      <li>Strong hybrid (flex-fuel) takes 8% CNF: the final notification lists 22.3% only for flex-fuel vehicles.</li>
+      <li>PHEV and REEV use declared weighted CO₂ on a petrol basis. Diesel CNF follows the notified biodiesel blend (0% here); CNG uses 5% or the CBG blend, whichever is higher.</li>
+      <li>Tech credits apply to every eligible powertrain; BEVs skip engine-related items (marked *).</li>
+      <li>Year-wise plan (assumption): the mix moves linearly from start to end; CO₂ improvement and sales growth compound yearly.</li>
+      <li>Credits and debits carry forward within a block and lapse at block end. Pooling sums members' block balances; trading terms are not modelled.</li>
+      <li>Portfolios are generic composites of Indian market patterns, not any manufacturer's data.</li>
+     </ul>
+    </div>
+    <div>
+     <div class="tw"><table id="ftab"></table></div>
+     <p class="note">Year coefficients: a = 0.00158 / 0.00152 / 0.00148 / 0.00139 / 0.00131; c = 3.9960 / 3.8600 / 3.7585 / 3.5313 / 3.3273.</p>
+    </div>
+   </div>
+  </details>
+ </section>
+
+ <section class="privgrid priv">
+  <div class="card trace"><div class="card-h"><h2>Calculation trace</h2></div><div id="trace"></div></div>
+  <div class="card"><div class="card-h"><h2>Self-check against Gazette formulas</h2></div><div id="checks"></div></div>
+ </section>
+
+ <footer>
+  <span>Illustrative scenario tool based on MoP Notification S.O. 5346(E), 29 Sep 2026. Not a compliance filing. Portfolios are generic, not specific manufacturers. Views are personal.</span>
+  <span>Built by <a href="https://www.linkedin.com/in/prashant-parihar-ph-d-90970222" target="_blank" rel="noopener">Dr. Prashant Parihar</a></span>
+ </footer>
+</div>
+<div id="report" aria-hidden="true"></div>
+
+<script>
+(()=>{
+'use strict';
+const ED='public',PRIV=ED==='private';
+if(!PRIV)document.querySelectorAll('.priv').forEach(e=>e.remove());
+const AUTHOR='Dr. Prashant Parihar',LINK='https://www.linkedin.com/in/prashant-parihar-ph-d-90970222';
+const K=23.7135,B=1229,CAP=0.3795,TC=0.0422;
+const YRS=[
+ {l:'2027-28',a:.00158,c:3.9960,blk:1},
+ {l:'2028-29',a:.00152,c:3.8600,blk:1},
+ {l:'2029-30',a:.00148,c:3.7585,blk:1},
+ {l:'2030-31',a:.00139,c:3.5313,blk:2},
+ {l:'2031-32',a:.00131,c:3.3273,blk:2}];
+const BLK=['FY 2027-28 to 2029-30','FY 2030-31 to 2031-32'];
+const PT=[
+ {id:'petrol',n:'Petrol (E20)',fuel:'petrol',cnf:8,v:1,col:'#2563eb'},
+ {id:'diesel',n:'Diesel',fuel:'diesel',cnf:0,v:1,col:'#64748b'},
+ {id:'cng',n:'CNG',fuel:'cng',cnf:5,v:1,col:'#d97706'},
+ {id:'lpg',n:'LPG',fuel:'lpg',cnf:0,v:1,col:'#a16207'},
+ {id:'shev',n:'Strong hybrid',fuel:'petrol',cnf:8,v:1.6,col:'#7c3aed'},
+ {id:'shevf',n:'Strong hybrid (flex-fuel)',fuel:'petrol',cnf:8,v:2.5,col:'#c026d3'},
+ {id:'phev',n:'Plug-in hybrid',fuel:'petrol',cnf:8,v:2.5,col:'#0891b2'},
+ {id:'ffv',n:'Flex-fuel',fuel:'petrol',cnf:22.3,v:1.1,col:'#65a30d'},
+ {id:'reev',n:'Range-extended EV',fuel:'petrol',cnf:8,v:3,col:'#0d9488'},
+ {id:'bev',n:'Battery EV',fuel:'elec',cnf:0,v:3,col:'#16a34a'}];
+const FCX={petrol:['0.04217',.04217],diesel:['0.03776*1.1168',.03776*1.1168],lpg:['0.0615*0.6857',.0615*.6857],cng:['0.03647*1.1563',.03647*1.1563],elec:['0.1028',.1028]};
+const FUELN={petrol:'Petrol CO₂',diesel:'Diesel CO₂',lpg:'LPG CO₂',cng:'CNG CO₂',elec:'Electricity'};
+const TECH=[['Start-stop',1],['Tyre pressure monitoring',0],['Regenerative braking',0],['6-speed+ transmission',1],['Efficient alternator',1],['12V/48V motor-generator',1],['Exterior LED lighting',0],['Advanced glazing',0],['Electric water pump',1],['High-efficiency A/C',0],['Solar-reflective paint',0],['PWM radiator fan',0]];
+const PRE=[
+ {n:'Small cars, CNG & hybrids',sales:1800000,tech:[0,1,3,4,6],mix:{petrol:58,cng:30,shev:6,ffv:1,bev:5},
+  m:{petrol:960,diesel:1250,cng:1010,lpg:980,shev:1280,shevf:1300,phev:1500,ffv:1000,reev:1550,bev:1420},
+  x:{petrol:112,diesel:112,cng:92,lpg:115,shev:79,shevf:80,phev:45,ffv:112,reev:40,bev:13.5}},
+ {n:'EV & CNG pioneer',sales:560000,tech:[0,1,3,4,6],mix:{petrol:46,diesel:10,cng:26,bev:18},
+  m:{petrol:1150,diesel:1400,cng:1180,lpg:1150,shev:1350,shevf:1370,phev:1650,ffv:1170,reev:1700,bev:1500},
+  x:{petrol:120,diesel:115,cng:98,lpg:122,shev:84,shevf:85,phev:48,ffv:120,reev:42,bev:14}},
+ {n:'SUV & diesel heavy',sales:620000,tech:[0,1,3,4,6,8],mix:{petrol:33,diesel:58,bev:9},
+  m:{petrol:1600,diesel:1800,cng:1500,lpg:1550,shev:1700,shevf:1720,phev:1950,ffv:1620,reev:2000,bev:2050},
+  x:{petrol:150,diesel:140,cng:120,lpg:150,shev:105,shevf:106,phev:60,ffv:150,reev:55,bev:17}},
+ {n:'Petrol-led SUV & sedan',sales:600000,tech:[0,1,3,6],mix:{petrol:62,diesel:20,cng:14,bev:4},
+  m:{petrol:1200,diesel:1420,cng:1150,lpg:1180,shev:1380,shevf:1400,phev:1700,ffv:1220,reev:1750,bev:1650},
+  x:{petrol:124,diesel:118,cng:97,lpg:126,shev:86,shevf:87,phev:50,ffv:124,reev:44,bev:15}}];
+const CMP_COL=['#2563eb','#ea580c','#7c3aed','#0d9488'];
+const IDX=Object.fromEntries(PT.map((t,i)=>[t.id,i]));
+const $=s=>document.querySelector(s);
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const r3=x=>Math.round(x*1000)/1000;
+const sum=a=>a.reduce((s,x)=>s+x,0);
+const fL=x=>x.toFixed(3),fG=x=>x.toFixed(1);
+const sg=(x,d=3)=>(x>0?'+':x<0?'−':'')+Math.abs(x).toFixed(d);
+const inr=x=>Math.round(x).toLocaleString('en-IN');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const M=x=>sg(x/1e6,2)+' M';
+
+/* ============ core maths (Gazette S.O. 5346(E)), per scenario ============ */
+function scFromPreset(pi){const p=PRE[pi];return{name:p.n,pi,sales:p.sales,start:PT.map(t=>p.mix[t.id]||0),end:null,traj:false,imp:0,gr:0,
+ props:PT.map(t=>({m:p.m[t.id],x:p.x[t.id],cnf:t.cnf,v:t.v})),tech:[...p.tech],techOn:true}}
+const cloneSc=sc=>JSON.parse(JSON.stringify(sc));
+function nTechSc(sc,i){if(!sc.techOn)return 0;let n=0;for(const t of sc.tech)if(!(PT[i].fuel==='elec'&&TECH[t][1]))n++;return n}
+const ciSc=(sc,i)=>Math.min(nTechSc(sc,i)*TC,CAP);
+const impF=(sc,y)=>Math.pow(1-(sc.traj?sc.imp:0)/100,y);
+const fcSc=(sc,i,y)=>FCX[PT[i].fuel][1]*sc.props[i].x*impF(sc,y);
+const adjSc=(sc,i,y)=>Math.max(0,fcSc(sc,i,y)*(1-sc.props[i].cnf/100)-ciSc(sc,i));
+function mixSc(sc,y){if(!sc.traj||!sc.end)return sc.start;const t=y/4;return sc.start.map((s,i)=>s+(sc.end[i]-s)*t)}
+const salesSc=(sc,y)=>sc.sales*Math.pow(1+(sc.traj?sc.gr:0)/100,y);
+function calcSc(sc,y,sh,vOne){
+ sh=sh||mixSc(sc,y);const tot=sum(sh)||1;let W=0,den=0,num=0;
+ sh.forEach((s,i)=>{if(s<=0)return;const p=sc.props[i];W+=s*p.m;const e=s*(vOne?1:p.v);den+=e;num+=e*adjSc(sc,i,y)});
+ W/=tot;const Y=YRS[y],T=Y.a*(W-B)+Y.c,P=den?num/den:0,Tr=r3(T),Pr=r3(P),gL=r3(Tr-Pr),gG=gL*K,n=salesSc(sc,y),bal=gG*n;
+ return{W,T,P,Tr,Pr,gL,gG,n,bal,den:den/tot,y};
+}
+function runSc(sc){const ys=YRS.map((_,y)=>calcSc(sc,y));return{ys,b1:sum(ys.slice(0,3).map(r=>r.bal)),b2:sum(ys.slice(3).map(r=>r.bal))}}
+
+/* ============ state ============ */
+let S=null,rowEls=[],saved=[];
+const U={year:0,edit:'start',sweep:IDX.bev,pin:null,vis:new Set(),cmp:new Set(['p0','p1','p2','p3']),pool:false};
+const PRESC=PRE.map((_,i)=>scFromPreset(i));
+const SKEY='cafe3-scenarios-v1';
+if(PRIV){try{saved=JSON.parse(localStorage.getItem(SKEY)||'[]')||[]}catch(e){saved=[]}}
+function persist(){try{localStorage.setItem(SKEY,JSON.stringify(saved));return true}catch(e){return false}}
+function visFrom(sc){const v=new Set();PT.forEach((_,i)=>{if(sc.start[i]>0||(sc.traj&&sc.end&&sc.end[i]>0))v.add(i)});if(!v.size)v.add(0);return v}
+const E=()=>(S.traj&&U.edit==='end')?S.end:S.start;
+const setE=a=>{if(S.traj&&U.edit==='end')S.end=a;else S.start=a};
+function rebalance(arr,i,val){
+ val=clamp(val,0,100);const out=arr.slice(),others=sum(arr)-arr[i],rem=100-val;
+ if(others<1e-9){const ids=[...U.vis].filter(j=>j!==i);if(!ids.length){out[i]=100;return out}out.fill(0);ids.forEach(j=>out[j]=rem/ids.length)}
+ else out.forEach((x,j)=>{if(j!==i)out[j]=x*rem/others});
+ out[i]=val;return out;
+}
+function setScenario(sc){S=sc;U.vis=visFrom(sc);U.pin=null;if(!S.traj)U.edit='start';syncControls();buildRows();buildTech();buildAdd();buildTable();setMsg('');update()}
+function syncControls(){$('#preset').value=S.pi;$('#sales').value=Math.round(S.sales);$('#techOn').checked=S.techOn;$('#trajOn').checked=S.traj;$('#imp').value=S.imp;$('#gr').value=S.gr;if(PRIV)$('#scName').value=''}
+
+/* ============ builders ============ */
+function buildRows(){
+ const box=$('#rows');box.innerHTML='';rowEls=[];
+ PT.forEach((t,i)=>{
+  if(!U.vis.has(i))return;
+  const p=S.props[i],unit=t.fuel==='elec'?' kWh/100 km':' g/km';
+  const r=document.createElement('div');r.className='row';r.style.setProperty('--rc',t.col);
+  r.innerHTML=`<div class="nm"><b style="background:${t.col}"></b><span>${esc(t.n)}</span><em>${inr(p.m)} kg · ${p.x}${unit}${p.v>1?' · ×'+p.v:''}</em></div><div class="pc num"></div><button class="rm" type="button" aria-label="Remove ${esc(t.n)}" title="Remove">×</button><input type="range" min="0" max="100" step="0.5" aria-label="${esc(t.n)} share">`;
+  const rg=r.querySelector('input');
+  rg.addEventListener('input',()=>{setE(rebalance(E(),i,+rg.value));setMsg('');update()});
+  r.querySelector('.rm').addEventListener('click',()=>{
+   if(U.vis.size<=1)return;
+   S.start=rebalance(S.start,i,0);if(S.traj&&S.end)S.end=rebalance(S.end,i,0);
+   U.vis.delete(i);buildRows();buildAdd();update();
+  });
+  box.appendChild(r);rowEls[i]={rg,pc:r.querySelector('.pc')};
+ });
+}
+function syncRows(){const a=E();rowEls.forEach((e,i)=>{if(!e)return;e.rg.value=a[i];e.pc.textContent=a[i].toFixed(1)+'%'})}
+function buildAdd(){
+ const sel=$('#addpt'),hid=PT.map((t,i)=>i).filter(i=>!U.vis.has(i));
+ sel.innerHTML=`<option value="">+ Add powertrain${hid.length?'':' (all shown)'}</option>`+hid.map(i=>`<option value="${i}">${esc(PT[i].n)}</option>`).join('');
+ sel.disabled=!hid.length;
+}
+function addPt(i){if(U.vis.has(i))return;U.vis.add(i);buildRows();buildAdd()}
+function buildTech(){
+ $('#techs').innerHTML=TECH.map((t,k)=>`<label><input type="checkbox" data-k="${k}"${S.tech.includes(k)?' checked':''}><span>${esc(t[0])}${t[1]?'<sup> *</sup>':''}</span></label>`).join('');
+ $('#techs').querySelectorAll('input').forEach(c=>c.addEventListener('change',()=>{const k=+c.dataset.k;S.tech=S.tech.filter(x=>x!==k);if(c.checked)S.tech.push(k);S.tech.sort((a,b)=>a-b);update()}));
+ $('#techs').classList.toggle('off',!S.techOn);
+}
+function buildTable(){
+ const ro=!PRIV;
+ const inp=(i,k,step)=>ro?(k==='m'?inr(S.props[i][k]):S.props[i][k]):`<input type="number" step="${step}" data-i="${i}" data-k="${k}" value="${S.props[i][k]}" aria-label="${esc(PT[i].n)} ${k}">`;
+ let h='<thead><tr><th>Powertrain</th><th>Mass kg</th><th>Input</th><th>FC L/100 km</th><th>CNF %</th><th>vᵢ</th><th>Tech cᵢ</th><th>Adjusted L (g/km)</th></tr></thead><tbody>';
+ PT.forEach((t,i)=>{h+=`<tr><td>${esc(t.n)}</td><td>${inp(i,'m',10)}</td><td>${inp(i,'x',0.5)} <span class="mut">${t.fuel==='elec'?'kWh':'g'}</span></td><td></td><td>${inp(i,'cnf',0.1)}</td><td>${inp(i,'v',0.1)}</td><td></td><td></td></tr>`});
+ $('#ftab').innerHTML=h+'</tbody>';
+ if(PRIV)$('#ftab').querySelectorAll('input').forEach(n=>n.addEventListener('change',()=>{const v=parseFloat(n.value);if(!isFinite(v)||v<0){n.value=S.props[+n.dataset.i][n.dataset.k];return}S.props[+n.dataset.i][n.dataset.k]=v;buildRows();update()}));
+}
+function tableValues(){const y=U.year;$('#ftab').querySelectorAll('tbody tr').forEach((tr,i)=>{const td=tr.children,a=adjSc(S,i,y);td[3].textContent=fL(fcSc(S,i,y));td[6].textContent=fL(ciSc(S,i));td[7].textContent=`${fL(a)} (${fG(a*K)})`})}
+
+/* ============ render ============ */
+function tile(label,tip,val,unit,g,sub,cls,delta){
+ return `<div class="kpi ${cls||''}"><div class="kl">${label}<i class="tip" tabindex="0" data-tip="${esc(tip)}">i</i></div><div class="val">${val}${unit?`<small>${unit}</small>`:''}</div>${g?`<div class="g">${g}</div>`:''}${sub?`<div class="sub">${sub}</div>`:''}${delta||''}</div>`;
+}
+function kpis(c){
+ const Y=YRS[U.year],ok=c.gL>=0,pn=U.pin;
+ const dl=(v,u,d=3)=>pn?`<span class="delta">${sg(v,d)}${u} vs pin</span>`:'';
+ $('#kpis').innerHTML=
+  tile('Fleet mass','Sales-weighted unladen mass W. A heavier fleet gets a looser target.',inr(c.W),'kg','',`Reference ${inr(B)} kg`,'',dl(c.W-(pn?pn.W:0),' kg',0))+
+  tile('Target · FY '+Y.l,'a × (W − 1229) + c for FY '+Y.l+', petrol-equivalent, MIDC.',fL(c.Tr),'L/100 km',`(${fG(c.Tr*K)} g CO₂/km)`,`a ${Y.a} · c ${Y.c.toFixed(4)}`,'',dl(c.Tr-(pn?pn.Tr:0),''))+
+  tile('Fleet performance','Super-credit weighted average after CNF and tech credits. Lower is better.',fL(c.Pr),'L/100 km',`(${fG(c.Pr*K)} g CO₂/km)`,`Super-credit weight ${c.den.toFixed(2)}× sales`,'',dl(c.Pr-(pn?pn.Pr:0),''))+
+  tile('Gap to target','Target minus performance. Positive = complies with margin; negative = shortfall.',sg(c.gL),'L/100 km',`(${sg(c.gG,1)} g CO₂/km)<span class="pill ${ok?'ok':'bad'}">${ok?'Complies':'Shortfall'}</span>`,'','state-'+(ok?'ok':'bad'),dl(c.gL-(pn?pn.gL:0),''))+
+  tile('Passbook balance','(T − P) in g CO₂/km × that year’s sales, recorded in each manufacturer’s BEE passbook. Positive = credit, negative = debit.',sg(c.bal/1e6,2),'M g·veh',`<span class="${ok?'good':'bad'}">${ok?'Credit':'Debit'} for FY ${Y.l}</span>`,'Gap × sales. Credits offset later debits within the block, then lapse.',ok?'':'state-bad',dl((c.bal-(pn?pn.bal:0))/1e6,' M',2));
+}
+function mixbar(){const m=mixSc(S,U.year);$('#mixbar').innerHTML=PT.map((t,i)=>m[i]>0?`<span style="width:${m[i]}%;background:${t.col}" title="${esc(t.n)} ${m[i].toFixed(1)}%"></span>`:'').join('');
+ $('#mixNote').textContent=S.traj?`Bar: FY ${YRS[U.year].l} mix · Sliders: ${U.edit==='end'?'end (FY 2031-32)':'start (FY 2027-28)'} mix`:''}
+function techHint(){
+ $('#techs').classList.toggle('off',!S.techOn);
+ if(!S.techOn){$('#techHint').textContent='Tech credits off.';return}
+ const nI=nTechSc(S,0),nB=nTechSc(S,IDX.bev);
+ $('#techHint').innerHTML=`Engine vehicles: <b>${nI}</b> × 1 g = <b>−${Math.min(nI,9)} g/km</b>${nI>9?' (cap 9)':''} · BEV: <b>${nB}</b> eligible`;
+}
+function trajUI(){
+ $('#editSeg').hidden=!S.traj;$('#imp').disabled=$('#gr').disabled=!S.traj;
+ $('#editSeg').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.e===U.edit));
+ $('#salesLbl').textContent=S.traj?'Annual sales FY 2027-28':'Annual sales (vehicles)';
+ if(!S.traj){$('#trajHint').textContent='Off: the same mix, CO₂ and sales apply to every year.';return}
+ const ch=PT.map((t,i)=>[t,S.end[i]-S.start[i]]).filter(x=>Math.abs(x[1])>=.05).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1])).slice(0,3);
+ $('#trajHint').innerHTML=`Start → end: ${ch.length?ch.map(([t,d])=>`${esc(t.n)} <b>${sg(d,1)} pts</b>`).join(', '):'no mix change yet (pick “End 2031-32” and move sliders)'}.`;
+}
+function nice(lo,hi,n=4){const span=hi-lo||1,raw=span/n,mag=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/mag,st=(f<1.5?1:f<3?2:f<7?5:10)*mag;const t=[];for(let v=Math.ceil(lo/st)*st;v<=hi+1e-9;v+=st)t.push(+v.toFixed(6));return t}
+const W_=el=>Math.max(260,Math.floor(el.clientWidth));
+const short=n=>n.replace('Strong hybrid','S-hybrid').replace(' (flex-fuel)',' FFV').replace('Range-extended EV','REEV').replace('Plug-in hybrid','PHEV');
+
+function crossing(pts,cur){
+ const xs=[];
+ for(let k=1;k<pts.length;k++){const a=pts[k-1],b=pts[k];if((a.gL<0)!==(b.gL<0)){const x=a.x+(b.x-a.x)*(0-a.gL)/((b.gL-a.gL)||1e-9);xs.push({x,up:b.gL>=0})}}
+ if(!xs.length)return null;xs.sort((p,q)=>Math.abs(p.x-cur)-Math.abs(q.x-cur));return xs[0];
+}
+function chartSweep(c){
+ const el=$('#c1'),w=W_(el),h=w<520?230:270,ml=46,mr=50,mt=14,mb=40,pw=w-ml-mr,ph=h-mt-mb,i=U.sweep,base=mixSc(S,U.year),cur=base[i];
+ const pts=[];for(let x=0;x<=100;x+=2)pts.push({x,...calcSc(S,U.year,rebalance(base,i,x))});
+ const vals=pts.flatMap(p=>[p.Tr,p.Pr]);let lo=Math.min(...vals),hi=Math.max(...vals);const pad=Math.max(.1,(hi-lo)*.08);lo-=pad;hi+=pad;
+ const X=x=>ml+pw*x/100,Y=v=>mt+ph-(v-lo)/(hi-lo)*ph,ticks=nice(lo,hi);
+ const path=k=>pts.map((p,j)=>`${j?'L':'M'}${X(p.x).toFixed(1)},${Y(p[k]).toFixed(1)}`).join('');
+ let s=`<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="Target and fleet performance as ${esc(PT[i].n)} share varies">`;
+ ticks.forEach(t=>{s+=`<line class="axl" x1="${ml}" x2="${ml+pw}" y1="${Y(t)}" y2="${Y(t)}" stroke-dasharray="2 4"/><text class="ax" x="${ml-6}" y="${Y(t)+4}" text-anchor="end">${t.toFixed(2)}</text><text class="ax" x="${ml+pw+6}" y="${Y(t)+4}">${(t*K).toFixed(0)}</text>`});
+ for(let k=1;k<pts.length;k++){const ok=(pts[k-1].gL+pts[k].gL)/2>=0;s+=`<rect x="${X(pts[k-1].x)}" y="${mt+ph+3}" width="${X(pts[k].x)-X(pts[k-1].x)+.5}" height="6" fill="var(--${ok?'good':'bad'})" opacity=".8"/>`}
+ [0,25,50,75,100].forEach(x=>{s+=`<text class="ax" x="${X(x)}" y="${mt+ph+22}" text-anchor="middle">${x}%</text>`});
+ s+=`<text class="ax" x="${ml+pw/2}" y="${h-3}" text-anchor="middle">${esc(PT[i].n)} share of sales · FY ${YRS[U.year].l}</text>`;
+ s+=`<text class="ax" transform="translate(11 ${mt+ph/2}) rotate(-90)" text-anchor="middle">L/100 km</text><text class="ax" transform="translate(${w-6} ${mt+ph/2}) rotate(90)" text-anchor="middle">g CO₂/km</text>`;
+ s+=`<path d="${path('Tr')}" fill="none" stroke="var(--tline)" stroke-width="2.25"/><path d="${path('Pr')}" fill="none" stroke="var(--perf)" stroke-width="2.75"/>`;
+ const cx=X(cur),cr=crossing(pts,cur);
+ if(cr){const xx=X(cr.x),yy=Y(pts.reduce((a,p)=>Math.abs(p.x-cr.x)<Math.abs(a.x-cr.x)?p:a).Tr);s+=`<circle cx="${xx}" cy="${yy}" r="6" fill="var(--card)" stroke="var(--good)" stroke-width="2.5"/>`}
+ s+=`<line x1="${cx}" x2="${cx}" y1="${mt}" y2="${mt+ph}" stroke="var(--muted)" stroke-dasharray="4 3"/><circle cx="${cx}" cy="${Y(c.Tr)}" r="4.5" fill="var(--tline)"/><circle cx="${cx}" cy="${Y(c.Pr)}" r="5" fill="var(--perf)" stroke="var(--card)" stroke-width="1.5"/>`;
+ const rt=cx>ml+pw*.72;s+=`<text x="${rt?cx-6:cx+6}" y="${mt+11}" text-anchor="${rt?'end':'start'}" font-size="11.5" font-weight="650" fill="var(--ink)">Now ${cur.toFixed(1)}%</text>`;
+ el.innerHTML=s+'</svg>';
+ const be=$('#be'),nm=esc(PT[i].n),fy='FY '+YRS[U.year].l;
+ if(!cr){be.innerHTML=c.gL>=0?`Complies across 0–100% ${nm} in ${fy}.`:`<span class="bad">No ${nm} share alone closes the gap in ${fy}.</span> Try another powertrain or more tech.`;return}
+ const need=cr.x.toFixed(1),done=c.gL>=0,canApply=!done&&!S.traj;
+ be.innerHTML=`${done?'<span class="good">Complies now.</span> Stays compliant':'Complies'} at <b>${cr.up?'≥':'≤'} ${need}% ${nm}</b> <span class="mut">(now ${cur.toFixed(1)}%, ${fy})</span>${canApply?`<button class="btn pri" type="button" id="apply">Apply ${need}%</button>`:''}`;
+ const ap=$('#apply');if(ap)ap.onclick=()=>{const t=cr.up?Math.ceil(cr.x*2)/2:Math.floor(cr.x*2)/2;addPt(i);S.start=rebalance(S.start,i,t);setMsg(`${PT[i].n} set to ${t}%.`);update()};
+}
+function chartDrivers(c){
+ const el=$('#c2'),w=W_(el),y=U.year,m=mixSc(S,y),act=PT.map((t,i)=>i).filter(i=>m[i]>0),A=act.map(i=>adjSc(S,i,y));
+ const ord=act.map((i,k)=>[i,A[k]]).sort((a,b)=>b[1]-a[1]);
+ const lw=w<420?92:128,rw=w<420?122:140,rh=34,mt=22,h=mt+ord.length*rh+8,pw=w-lw-rw;
+ const mx=Math.max(c.Tr,...A)*1.04,X=v=>lw+pw*v/mx,den=sum(act.map(i=>m[i]*S.props[i].v));
+ let s=`<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="Adjusted consumption by powertrain against target">`;
+ ord.forEach(([i,a],k)=>{const yy=mt+k*rh,t=PT[i],wt=m[i]*S.props[i].v/den*100,over=a>c.Tr;
+  s+=`<text x="0" y="${yy+15}" font-size="12" font-weight="600" fill="var(--ink)">${esc(w<420?short(t.n):t.n)}</text><text x="0" y="${yy+28}" class="ax">weight ${wt.toFixed(0)}%${S.props[i].v>1?' · ×'+S.props[i].v:''}</text>`;
+  s+=`<rect x="${lw}" y="${yy+5}" width="${Math.max(2,X(a)-lw)}" height="18" rx="4" fill="${t.col}" opacity=".9"/>`;
+  s+=`<text x="${w}" y="${yy+18}" text-anchor="end" font-size="12" font-weight="650" fill="var(--${over?'bad':'good'})">${fL(a)} <tspan fill="var(--muted)" font-weight="450">(${fG(a*K)} g/km)</tspan></text>`;});
+ const tx=X(c.Tr);s+=`<line x1="${tx}" x2="${tx}" y1="${mt-6}" y2="${h-4}" stroke="var(--tline)" stroke-width="2" stroke-dasharray="5 3"/><text x="${tx}" y="${mt-10}" text-anchor="middle" font-size="11" font-weight="650" fill="var(--ink)">Target ${fL(c.Tr)} L/100 km (${fG(c.Tr*K)} g/km)</text>`;
+ el.innerHTML=s+'</svg>';
+}
+function chartGlide(){
+ const el=$('#c3'),w=W_(el),h=w<420?210:230,ml=36,mr=8,mt=26,mb=44,pw=w-ml-mr,ph=h-mt-mb;
+ const run=runSc(S),rs=run.ys,m=Math.max(2,...rs.map(r=>Math.abs(r.gG)))*1.3,Y=v=>mt+ph/2-v/m*ph/2,bw=pw/5;
+ let s=`<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="Gap to target by year in g CO2 per km">`;
+ [[0,3,'Block 1'],[3,5,'Block 2']].forEach(([a,b,l],k)=>{s+=`<rect x="${ml+a*bw+2}" y="${mt-20}" width="${(b-a)*bw-4}" height="${ph+20}" rx="8" fill="var(--soft)" opacity="${k?.55:1}"/><text x="${ml+a*bw+10}" y="${mt-6}" class="ax" font-weight="650">${l}</text>`});
+ nice(-m,m,4).forEach(t=>{s+=`<text class="ax" x="${ml-6}" y="${Y(t)+4}" text-anchor="end">${t>0?'+':''}${t}</text>`});
+ s+=`<line x1="${ml}" x2="${ml+pw}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--muted)"/>`;
+ rs.forEach((r,y)=>{const x=ml+y*bw+bw*.24,bwi=bw*.52,ok=r.gG>=0,y0=Y(Math.max(0,r.gG)),hh=Math.max(1.5,Math.abs(Y(r.gG)-Y(0))),sel=y===U.year;
+  s+=`<g data-y="${y}" style="cursor:pointer"><rect x="${ml+y*bw}" y="${mt}" width="${bw}" height="${ph+mb}" fill="transparent"/><rect x="${x}" y="${y0}" width="${bwi}" height="${hh}" rx="4" fill="var(--${ok?'good':'bad'})" opacity="${sel?1:.55}" ${sel?'stroke="var(--ink)" stroke-width="1.5"':''}/>`;
+  s+=`<text x="${x+bwi/2}" y="${ok?y0-5:y0+hh+13}" text-anchor="middle" font-size="11.5" font-weight="650" fill="var(--${ok?'good':'bad'})">${sg(r.gG,1)}</text>`;
+  s+=`<text x="${x+bwi/2}" y="${mt+ph+16}" text-anchor="middle" font-size="12" font-weight="${sel?700:550}" fill="var(--ink)">${YRS[y].l}</text><text x="${x+bwi/2}" y="${mt+ph+31}" text-anchor="middle" class="ax">${ok?'credit':'debit'}</text></g>`;});
+ s+=`<text class="ax" transform="translate(9 ${mt+ph/2}) rotate(-90)" text-anchor="middle">g CO₂/km</text>`;
+ el.innerHTML=s+'</svg>';
+ el.querySelectorAll('g[data-y]').forEach(g=>g.addEventListener('click',()=>{U.year=+g.dataset.y;update()}));
+ const blk=b=>{const sel=rs.filter(r=>YRS[r.y].blk===b),g=b===1?run.b1:run.b2,avg=sum(sel.map(r=>r.gG))/sel.length;return `<div>Block ${b} (${BLK[b-1]})${b===2&&S.techOn&&S.tech.length?' · tech claims need tests':''}<b class="${g>=0?'good':'bad'}">${g>=0?'Net credit ':'Net debit '}${M(g)} g·veh</b><span class="mut">average ${sg(avg,1)} g CO₂/km per year</span></div>`};
+ $('#blocks').innerHTML=blk(1)+blk(2);
+}
+
+/* ---------- compare & pooling ---------- */
+function candidates(){
+ const L=[{k:'cur',n:'Current · '+S.name,sc:S}];
+ PRE.forEach((p,i)=>L.push({k:'p'+i,n:p.n,sc:PRESC[i]}));
+ if(PRIV)saved.forEach(s=>L.push({k:'s'+s.id,n:s.name,sc:s}));
+ return L;
+}
+function selected(){const L=candidates();[...U.cmp].forEach(k=>{if(!L.some(c=>c.k===k))U.cmp.delete(k)});return L.filter(c=>U.cmp.has(c.k))}
+function renderCompare(){
+ const L=candidates(),sel=selected(),colOf=k=>CMP_COL[sel.findIndex(c=>c.k===k)]||'var(--muted)';
+ $('#cands').innerHTML=L.map(c=>`<button class="cand" type="button" data-k="${c.k}" aria-pressed="${U.cmp.has(c.k)}" style="--cc:${colOf(c.k)}"><b></b>${esc(c.n)}</button>`).join('');
+ const data=sel.map(c=>({...c,run:runSc(c.sc),col:colOf(c.k)}));
+ // chart
+ const el=$('#c4'),w=W_(el),h=w<420?220:250,ml=40,mr=12,mt=24,mb=26,pw=w-ml-mr,ph=h-mt-mb;
+ const all=data.flatMap(d=>d.run.ys.map(r=>r.gG)).concat([0]);let lo=Math.min(...all),hi=Math.max(...all);const pad=Math.max(1.5,(hi-lo)*.12);lo-=pad;hi+=pad;
+ const X=y=>ml+pw*(y+.5)/5,Y=v=>mt+ph-(v-lo)/(hi-lo)*ph;
+ let s=`<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="Gap to target by year for compared portfolios">`;
+ [[0,3,'Block 1'],[3,5,'Block 2']].forEach(([a,b,l],k)=>{s+=`<rect x="${ml+pw*a/5+2}" y="${mt-18}" width="${pw*(b-a)/5-4}" height="${ph+18}" rx="8" fill="var(--soft)" opacity="${k?.55:1}"/><text x="${ml+pw*a/5+10}" y="${mt-5}" class="ax" font-weight="650">${l}</text>`});
+ nice(lo,hi,4).forEach(t=>{s+=`<line class="axl" x1="${ml}" x2="${ml+pw}" y1="${Y(t)}" y2="${Y(t)}" stroke-dasharray="2 4"/><text class="ax" x="${ml-6}" y="${Y(t)+4}" text-anchor="end">${t>0?'+':''}${t}</text>`});
+ s+=`<line x1="${ml}" x2="${ml+pw}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--muted)" stroke-width="1.25"/>`;
+ YRS.forEach((Yr,y)=>{s+=`<text class="ax" x="${X(y)}" y="${h-6}" text-anchor="middle" ${y===U.year?'font-weight="700" fill="var(--ink)"':''}>${Yr.l}</text>`});
+ data.forEach(d=>{s+=`<path d="${d.run.ys.map((r,y)=>`${y?'L':'M'}${X(y).toFixed(1)},${Y(r.gG).toFixed(1)}`).join('')}" fill="none" stroke="${d.col}" stroke-width="2.5"/>`;
+  d.run.ys.forEach((r,y)=>{s+=`<circle cx="${X(y)}" cy="${Y(r.gG)}" r="${y===U.year?5:3.5}" fill="${d.col}" stroke="var(--card)" stroke-width="1.5"><title>${esc(d.n)} · FY ${YRS[y].l}: ${sg(r.gG,1)} g CO₂/km</title></circle>`})});
+ if(!data.length)s+=`<text x="${ml+pw/2}" y="${mt+ph/2}" text-anchor="middle" class="ax">Pick portfolios above to compare</text>`;
+ el.innerHTML=s+'</svg>';
+ // table
+ const y=U.year;
+ const pool=PRIV&&U.pool&&data.length>=2;
+ data.forEach(d=>{d.c=d.run.ys[y];d.v1=calcSc(d.sc,y,null,true);const f=d.run.ys.find(r=>r.gL<0);d.first=f?'FY '+YRS[f.y].l:'None'});
+ const cls=v=>v>=0?'good':'bad';
+ const rows=[
+  ['Fleet mass (kg)',d=>inr(d.c.W)],
+  ['Target, L/100 km (g/km)',d=>`${fL(d.c.Tr)} (${fG(d.c.Tr*K)})`],
+  ['Performance, L/100 km (g/km)',d=>`${fL(d.c.Pr)} (${fG(d.c.Pr*K)})`],
+  ['Gap, L/100 km (g/km)',d=>`<b class="${cls(d.c.gL)}">${sg(d.c.gL)} (${sg(d.c.gG,1)})</b>`],
+  ['Super-credit lift (g/km)',d=>sg(d.c.gG-d.v1.gG,1)],
+  ['First shortfall year',d=>d.first],
+  ['Block 1 net (g·veh)',d=>`<span class="${cls(d.run.b1)}">${M(d.run.b1)}</span>`,'b1'],
+  ['Block 2 net (g·veh)',d=>`<span class="${cls(d.run.b2)}">${M(d.run.b2)}</span>`,'b2']];
+ let t=`<thead><tr><th>FY ${YRS[y].l}</th>${data.map(d=>`<th style="white-space:normal;min-width:96px"><span class="sw" style="background:${d.col}"></span>${esc(d.n)}</th>`).join('')}${pool?'<th>Pool</th>':''}</tr></thead><tbody>`;
+ rows.forEach(([lab,f,key])=>{t+=`<tr><td>${lab}</td>${data.map(d=>`<td>${f(d)}</td>`).join('')}${pool?`<td>${key?(v=>`<b class="${cls(v)}">${M(v)}</b>`)(sum(data.map(d=>d.run[key]))):'—'}</td>`:''}</tr>`});
+ $('#cmpTab').innerHTML=data.length?t+'</tbody>':'<tbody><tr><td>Select up to 4 portfolios.</td></tr></tbody>';
+ if(PRIV){const pn=$('#poolNote');
+  if(!U.pool)pn.textContent='';
+  else if(data.length<2)pn.textContent='Select at least two portfolios to pool.';
+  else{const b1=sum(data.map(d=>d.run.b1)),b2=sum(data.map(d=>d.run.b2)),ok=b1>=0&&b2>=0;
+   pn.innerHTML=`Pooled, ${data.length} portfolios <b class="${ok?'good':'bad'}">${ok?'comply in both blocks':'fall short in '+(b1<0&&b2<0?'both blocks':b1<0?'Block 1':'Block 2')}</b>. One member's credit can cover another's debit within a block; trading terms are not modelled.`}}
+}
+
+/* ---------- saved scenarios (private) ---------- */
+function renderSaved(){
+ if(!PRIV)return;
+ $('#slist').innerHTML=saved.length?saved.map(s=>`<div class="sitem" data-id="${s.id}"><div class="sn"><b title="${esc(s.name)}">${esc(s.name)}</b><span>${esc(PRE[s.pi]?PRE[s.pi].n:'')}${s.traj?' · year-wise plan':''}</span></div><button class="btn sm" type="button" data-op="load">Load</button><button class="btn sm" type="button" data-op="dup" title="Duplicate">Copy</button><button class="btn sm" type="button" data-op="del" title="Delete" aria-label="Delete ${esc(s.name)}">×</button></div>`).join(''):'<p class="note" style="margin:0">No saved scenarios yet.</p>';
+}
+const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function smsg(t){$('#smsg').textContent=t}
+
+/* ---------- trace (private) ---------- */
+function trace(c){
+ if(!PRIV)return;const Y=YRS[U.year];
+ $('#trace').innerHTML=`<p>W = ${c.W.toFixed(3)} kg</p><p>T = ${Y.a} × (${c.W.toFixed(3)} − 1229) + ${Y.c.toFixed(4)} = ${c.T.toFixed(6)} → <b>${fL(c.Tr)}</b> L/100 km (${fG(c.Tr*K)} g)</p><p>Σvᵢnᵢ / Σnᵢ = ${c.den.toFixed(4)}</p><p>P = ${c.P.toFixed(6)} → <b>${fL(c.Pr)}</b> L/100 km (${fG(c.Pr*K)} g)</p><p>T − P = ${sg(c.gL)} L/100 km = ${sg(c.gG,3)} g/km</p><p>Passbook = ${sg(c.gG,3)} × ${inr(c.n)} = ${inr(c.bal)} g·veh (${c.bal>=0?'credit':'debit'})</p>`;
+}
+function setMsg(t){$('#msg').textContent=t}
+
+function update(){
+ const c=calcSc(S,U.year);
+ syncRows();mixbar();kpis(c);techHint();trajUI();
+ document.querySelectorAll('#years button').forEach((b,y)=>b.setAttribute('aria-pressed',y===U.year));
+ $('#pinbtn').textContent=U.pin?'Clear pin':'Pin baseline';$('#pinbtn').classList.toggle('on',!!U.pin);
+ if(+$('#sweep').value!==U.sweep)$('#sweep').value=U.sweep;
+ chartSweep(c);chartDrivers(c);chartGlide();renderCompare();trace(c);tableValues();
+}
+
+/* ============ actions ============ */
+function act(a){
+ const ix=IDX;
+ if(a==='pin'){U.pin=U.pin?null:calcSc(S,U.year);setMsg(U.pin?'Baseline pinned. KPI tiles now show the change.':'');update();return}
+ const arr=E();
+ if(a==='bev10'){addPt(ix.bev);const v=Math.min(100,arr[ix.bev]+10);setE(rebalance(arr,ix.bev,v));setMsg(`Battery EV now ${v.toFixed(1)}%.`)}
+ if(a==='cng'){const mv=Math.min(10,arr[ix.petrol]);if(!mv){setMsg('No petrol share to move.');return}addPt(ix.cng);const n=arr.slice();n[ix.petrol]-=mv;n[ix.cng]+=mv;setE(n);setMsg(`Moved ${mv.toFixed(1)} pts from petrol to CNG.`)}
+ if(a==='hyb'){addPt(ix.shev);setE(rebalance(arr,ix.shev,20));setMsg('Strong hybrid set to 20%.')}
+ if(a==='dsl'){if(!arr[ix.diesel]){setMsg('No diesel in this mix.');return}const v=arr[ix.diesel]/2;setE(rebalance(arr,ix.diesel,v));setMsg(`Diesel halved to ${v.toFixed(1)}%.`)}
+ update();
+}
+
+/* ============ exports ============ */
+function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'scenario';
+
+/* PNG of a chart */
+function chartPng(id,title){
+ const svg=$('#'+id+' svg');if(!svg)return;
+ const cs=getComputedStyle(document.documentElement),vv=n=>cs.getPropertyValue(n).trim();
+ const fix=v=>v.replace(/var\((--[\w-]+)\)/g,(_,n)=>vv(n));
+ const cl=svg.cloneNode(true),src=svg.querySelectorAll('*'),dst=cl.querySelectorAll('*');
+ src.forEach((s,k)=>{const d=dst[k];[...d.attributes].forEach(at=>{if(at.value.includes('var('))d.setAttribute(at.name,fix(at.value))});
+  if(s.classList.contains('ax')){const st=getComputedStyle(s);d.setAttribute('fill',st.fill);d.setAttribute('font-size','11')}
+  if(s.classList.contains('axl'))d.setAttribute('stroke',getComputedStyle(s).stroke);
+  if(s.tagName==='text')d.setAttribute('font-family','system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif')});
+ const w=+svg.getAttribute('width'),h=+svg.getAttribute('height'),pad=18,th=34,fh=22,W=w+pad*2,H=h+pad*2+th+fh;
+ const ns='http://www.w3.org/2000/svg',ff='system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif';
+ const sub=`${S.name} · FY ${YRS[U.year].l}`;
+ const out=`<svg xmlns="${ns}" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" fill="${vv('--card')}"/><text x="${pad}" y="${pad+14}" font-family="${ff}" font-size="15" font-weight="700" fill="${vv('--ink')}">${esc(title)}</text><text x="${pad}" y="${pad+30}" font-family="${ff}" font-size="11.5" fill="${vv('--muted')}">${esc(sub)}</text><g transform="translate(${pad} ${pad+th+6})">${cl.innerHTML}</g><text x="${pad}" y="${H-10}" font-family="${ff}" font-size="10.5" fill="${vv('--muted')}">CAFE III Fleet Explorer · ${AUTHOR} · Illustrative, based on MoP S.O. 5346(E)</text></svg>`;
+ const img=new Image();
+ img.onload=()=>{const sc=2,cv=document.createElement('canvas');cv.width=W*sc;cv.height=H*sc;const g=cv.getContext('2d');g.scale(sc,sc);g.drawImage(img,0,0);cv.toBlob(b=>{if(b)download(b,`cafe3-${slug(title)}.png`)},'image/png')};
+ img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(out);
+}
+
+/* PDF report via print */
+function buildReport(){
+ const y=U.year,c=calcSc(S,y),run=runSc(S),Y=YRS[y],ok=c.gL>=0,today=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+ const svg=id=>{const s=$('#'+id+' svg');return s?s.outerHTML:''};
+ const k=(l,v,g)=>`<div class="k"><span>${l}</span><b>${v}</b>${g?`<div>${g}</div>`:''}</div>`;
+ let h=`<div class="rp"><h1>CAFE III Fleet Compliance Report</h1><div class="meta">Scenario: <b>${esc(S.name)}</b> · Base portfolio: ${esc(PRE[S.pi].n)} · Generated ${today} · Prepared by ${AUTHOR}</div>`;
+ h+=`<h2>Summary · FY ${Y.l}</h2><div class="kg">${k('Fleet mass',inr(c.W)+' kg')}${k('Target',fL(c.Tr)+' L/100 km',`(${fG(c.Tr*K)} g CO₂/km)`)}${k('Fleet performance',fL(c.Pr)+' L/100 km',`(${fG(c.Pr*K)} g CO₂/km)`)}${k('Gap to target',sg(c.gL)+' L/100 km',`(${sg(c.gG,1)} g CO₂/km) · <b class="${ok?'good':'bad'}">${ok?'Complies':'Shortfall'}</b>`)}${k('Passbook balance',M(c.bal)+' g·veh',ok?'Credit':'Debit')}</div>`;
+ h+=`<h2>Five-year passbook</h2><table><thead><tr><th>Year</th><th>Fleet mass kg</th><th>Target L/100 km (g/km)</th><th>Performance L/100 km (g/km)</th><th>Gap L/100 km (g/km)</th><th>Sales</th><th>Passbook g·veh</th><th>Status</th></tr></thead><tbody>${run.ys.map(r=>`<tr><td>FY ${YRS[r.y].l}</td><td>${inr(r.W)}</td><td>${fL(r.Tr)} (${fG(r.Tr*K)})</td><td>${fL(r.Pr)} (${fG(r.Pr*K)})</td><td>${sg(r.gL)} (${sg(r.gG,1)})</td><td>${inr(r.n)}</td><td>${M(r.bal)}</td><td class="${r.gL>=0?'good':'bad'}">${r.gL>=0?'Complies':'Shortfall'}</td></tr>`).join('')}<tr><td><b>Block 1 net</b></td><td colspan="5">${BLK[0]}</td><td><b class="${run.b1>=0?'good':'bad'}">${M(run.b1)}</b></td><td>${run.b1>=0?'Net credit':'Net debit'}</td></tr><tr><td><b>Block 2 net</b></td><td colspan="5">${BLK[1]}</td><td><b class="${run.b2>=0?'good':'bad'}">${M(run.b2)}</b></td><td>${run.b2>=0?'Net credit':'Net debit'}</td></tr></tbody></table>`;
+ h+=`<h2>Charts · FY ${Y.l}</h2><div class="fig"><p>Break-even finder: ${esc(PT[U.sweep].n)} share</p>${svg('c1')}</div><div class="two"><div class="fig"><p>What drives the gap · L/100 km (g CO₂/km)</p>${svg('c2')}</div><div class="fig"><p>Glide path · gap to target, g CO₂/km</p>${svg('c3')}</div></div>`;
+ const m0=S.start,m1=S.traj?S.end:null;
+ h+=`<div class="sec2"><h2>Portfolio inputs</h2><table><thead><tr><th>Powertrain</th><th>Share ${m1?'start → end':''} %</th><th>Mass kg</th><th>Input</th><th>CNF %</th><th>vᵢ</th><th>Tech cᵢ</th><th>Adjusted FY ${Y.l} L (g/km)</th></tr></thead><tbody>${PT.map((t,i)=>(m0[i]>0||(m1&&m1[i]>0))?`<tr><td>${esc(t.n)}</td><td>${m0[i].toFixed(1)}${m1?' → '+m1[i].toFixed(1):''}</td><td>${inr(S.props[i].m)}</td><td>${S.props[i].x} ${t.fuel==='elec'?'kWh/100 km':'g/km'}</td><td>${S.props[i].cnf}</td><td>${S.props[i].v}</td><td>${fL(ciSc(S,i))}</td><td>${fL(adjSc(S,i,y))} (${fG(adjSc(S,i,y)*K)})</td></tr>`:'').join('')}</tbody></table>`;
+ h+=`<p>Annual sales FY 2027-28: ${inr(S.sales)}. ${S.traj?`Year-wise plan on: CO₂ improvement ${S.imp}%/yr, sales growth ${S.gr}%/yr, mix interpolated linearly.`:'Same mix, CO₂ and sales every year.'} Tech credits: ${S.techOn&&S.tech.length?S.tech.map(t=>TECH[t][0]).join(', '):'none'}.</p></div>`;
+ const sel=selected();
+ if(sel.length){h+=`<div class="sec2"><h2>Portfolio comparison · FY ${Y.l}</h2><div class="fig">${svg('c4')}</div><table>${$('#cmpTab').innerHTML}</table>${PRIV&&U.pool?`<p>${$('#poolNote').innerHTML}</p>`:''}</div>`}
+ h+=`<div class="sec2"><h2>Method and assumptions</h2><ul><li>W = Σ nᵢWᵢ / Σ nᵢ; Target T = a × (W − 1229) + c; P = Σ vᵢnᵢ [FCᵢ(1 − CNFᵢ) − cᵢ] / Σ vᵢnᵢ; 1 L/100 km = 23.7135 g CO₂/km; passbook entry = (T − P) g/km × Σnᵢ.</li>${[...$('#notes').children].map(li=>`<li>${li.innerHTML}</li>`).join('')}</ul>`;
+ h+=`<p class="meta">Source: Ministry of Power Notification S.O. 5346(E), 29 September 2026 (Gazette of India, Extraordinary). Illustrative scenario tool; not a compliance filing. Portfolios are generic, not specific manufacturers. Views are personal. ${AUTHOR} · ${LINK.replace('https://www.','')}</p></div></div>`;
+ $('#report').innerHTML=h;
+}
+function printReport(){buildReport();setTimeout(()=>window.print(),50)}
+
+/* Excel live model (private) */
+const xe=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=v=>Number.isFinite(v)?String(+(+v).toPrecision(15)):'0';
+function colName(n){let s='';n++;while(n){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s}
+const NS_M='http://schemas.openxmlformats.org/spreadsheetml/2006/main',NS_R='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+const XH='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+function sheetXml(cells,cols,drawing){
+ const rows={};cells.forEach(cl=>{(rows[cl.r]=rows[cl.r]||[]).push(cl)});let sd='';
+ Object.keys(rows).map(Number).sort((a,b)=>a-b).forEach(r=>{sd+=`<row r="${r}">`;rows[r].sort((a,b)=>a.c-b.c).forEach(cl=>{const ref=colName(cl.c)+r,s=cl.s?` s="${cl.s}"`:'';
+  if(cl.f!=null){const str=typeof cl.v==='string';sd+=`<c r="${ref}"${s}${str?' t="str"':''}><f>${xe(cl.f)}</f>${cl.v!=null?`<v>${str?xe(cl.v):num(cl.v)}</v>`:''}</c>`}
+  else if(typeof cl.v==='number')sd+=`<c r="${ref}"${s}><v>${num(cl.v)}</v></c>`;
+  else sd+=`<c r="${ref}"${s} t="inlineStr"><is><t xml:space="preserve">${xe(cl.v)}</t></is></c>`});sd+='</row>'});
+ return XH+`<worksheet xmlns="${NS_M}" xmlns:r="${NS_R}">${cols?`<cols>${cols.map((w,k)=>`<col min="${k+1}" max="${k+1}" width="${w}" customWidth="1"/>`).join('')}</cols>`:''}<sheetData>${sd}</sheetData><pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>${drawing?'<drawing r:id="rId1"/>':''}</worksheet>`;
+}
+function rich(t,sz){return `<c:tx><c:rich><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr sz="${sz}" b="1"/></a:pPr><a:r><a:rPr lang="en-IN" sz="${sz}" b="1"/><a:t>${xe(t)}</a:t></a:r></a:p></c:rich></c:tx>`}
+function chartXml(o){
+ const strC=v=>`<c:strCache><c:ptCount val="${v.length}"/>${v.map((x,k)=>`<c:pt idx="${k}"><c:v>${xe(x)}</c:v></c:pt>`).join('')}</c:strCache>`;
+ const numC=(v,f)=>`<c:numCache><c:formatCode>${xe(f)}</c:formatCode><c:ptCount val="${v.length}"/>${v.map((x,k)=>`<c:pt idx="${k}"><c:v>${num(x)}</c:v></c:pt>`).join('')}</c:numCache>`;
+ const line=o.type==='line';
+ const ser=o.series.map((s,k)=>`<c:ser><c:idx val="${k}"/><c:order val="${k}"/><c:tx><c:strRef><c:f>${s.nameRef}</c:f>${strC([s.name])}</c:strRef></c:tx><c:spPr>${line?`<a:ln w="28575"><a:solidFill><a:srgbClr val="${s.color}"/></a:solidFill></a:ln>`:`<a:solidFill><a:srgbClr val="${s.color}"/></a:solidFill>`}</c:spPr>${line?`<c:marker><c:symbol val="circle"/><c:size val="6"/><c:spPr><a:solidFill><a:srgbClr val="${s.color}"/></a:solidFill></c:spPr></c:marker>`:'<c:invertIfNegative val="0"/>'}${o.labels?`<c:dLbls><c:numFmt formatCode="${xe(o.fmt)}" sourceLinked="0"/><c:spPr><a:noFill/><a:ln><a:noFill/></a:ln></c:spPr><c:showLegendKey val="0"/><c:showVal val="1"/><c:showCatName val="0"/><c:showSerName val="0"/><c:showPercent val="0"/><c:showBubbleSize val="0"/></c:dLbls>`:''}<c:cat><c:strRef><c:f>${o.catRef}</c:f>${strC(o.cats)}</c:strRef></c:cat><c:val><c:numRef><c:f>${s.ref}</c:f>${numC(s.vals,o.fmt)}</c:numRef></c:val>${line?'<c:smooth val="0"/>':''}</c:ser>`).join('');
+ const plot=line?`<c:lineChart><c:grouping val="standard"/><c:varyColors val="0"/>${ser}<c:marker val="1"/><c:axId val="111"/><c:axId val="222"/></c:lineChart>`
+  :`<c:barChart><c:barDir val="col"/><c:grouping val="${o.stacked?'percentStacked':'clustered'}"/><c:varyColors val="0"/>${ser}<c:gapWidth val="60"/>${o.stacked||o.overlap?'<c:overlap val="100"/>':''}<c:axId val="111"/><c:axId val="222"/></c:barChart>`;
+ return XH+`<c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="${NS_R}"><c:roundedCorners val="0"/><c:chart><c:title>${rich(o.title,1300)}<c:overlay val="0"/></c:title><c:autoTitleDeleted val="0"/><c:plotArea><c:layout/>${plot}<c:catAx><c:axId val="111"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="b"/><c:numFmt formatCode="General" sourceLinked="0"/><c:majorTickMark val="none"/><c:minorTickMark val="none"/><c:tickLblPos val="low"/><c:crossAx val="222"/><c:crosses val="autoZero"/><c:auto val="1"/><c:lblAlgn val="ctr"/><c:lblOffset val="100"/><c:noMultiLvlLbl val="0"/></c:catAx><c:valAx><c:axId val="222"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="l"/><c:majorGridlines><c:spPr><a:ln w="6350"><a:solidFill><a:srgbClr val="E2E8F0"/></a:solidFill></a:ln></c:spPr></c:majorGridlines><c:title>${rich(o.yTitle,1000)}<c:overlay val="0"/></c:title><c:numFmt formatCode="${xe(o.fmt)}" sourceLinked="0"/><c:majorTickMark val="none"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/><c:crossAx val="111"/><c:crosses val="autoZero"/><c:crossBetween val="between"/></c:valAx></c:plotArea><c:legend><c:legendPos val="b"/><c:overlay val="0"/></c:legend><c:plotVisOnly val="1"/><c:dispBlanksAs val="gap"/></c:chart></c:chartSpace>`;
+}
+function anchor(n,c0,r0,c1,r1){return `<xdr:twoCellAnchor><xdr:from><xdr:col>${c0}</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${r0}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from><xdr:to><xdr:col>${c1}</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${r1}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:to><xdr:graphicFrame macro=""><xdr:nvGraphicFramePr><xdr:cNvPr id="${n+1}" name="Chart ${n}"/><xdr:cNvGraphicFramePr/></xdr:nvGraphicFramePr><xdr:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></xdr:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/chart"><c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" r:id="rId${n}"/></a:graphicData></a:graphic></xdr:graphicFrame><xdr:clientData/></xdr:twoCellAnchor>`}
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0}
+function zipBlob(files,type){
+ const enc=new TextEncoder(),parts=[],central=[];let off=0;
+ files.forEach(f=>{const nm=enc.encode(f.name),d=enc.encode(f.data),crc=crc32(d);
+  const h=new DataView(new ArrayBuffer(30));h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(8,0,true);h.setUint16(10,0,true);h.setUint16(12,0x21,true);h.setUint32(14,crc,true);h.setUint32(18,d.length,true);h.setUint32(22,d.length,true);h.setUint16(26,nm.length,true);h.setUint16(28,0,true);
+  parts.push(new Uint8Array(h.buffer),nm,d);
+  const c=new DataView(new ArrayBuffer(46));c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(10,0,true);c.setUint16(12,0,true);c.setUint16(14,0x21,true);c.setUint32(16,crc,true);c.setUint32(20,d.length,true);c.setUint32(24,d.length,true);c.setUint16(28,nm.length,true);c.setUint16(30,0,true);c.setUint16(32,0,true);c.setUint16(34,0,true);c.setUint16(36,0,true);c.setUint32(38,0,true);c.setUint32(42,off,true);
+  central.push(new Uint8Array(c.buffer),nm);off+=30+nm.length+d.length});
+ const cs=sum(central.map(b=>b.length)),e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cs,true);e.setUint32(16,off,true);
+ return new Blob([...parts,...central,new Uint8Array(e.buffer)],{type});
+}
+function buildXlsx(){
+ const sc=S,ys=YRS.map((_,y)=>y),run=runSc(sc),mix=ys.map(y=>mixSc(sc,y)),end=sc.traj&&sc.end?sc.end:sc.start;
+ /* Inputs */
+ const I=[],P=(r,c,v,s,f)=>I.push({r,c,v,s,f});
+ P(1,0,'CAFE III Fleet Explorer — live model',2);P(2,0,'Scenario',1);P(2,1,sc.name);
+ P(3,0,'Edit the yellow cells. Calc and Charts update automatically. Basis: MoP S.O. 5346(E), 29 Sep 2026 (MIDC). Illustrative; not a compliance filing.');
+ [['b — reference mass (kg)',B,0],['g CO₂/km per 1 L/100 km',K,0],['Tech credit per item (L/100 km)',TC,0],['Tech credit cap (L/100 km)',CAP,0],['Annual sales FY 2027-28',Math.round(sc.sales),7],['Sales growth % per year',sc.traj?sc.gr:0,4],['CO₂ improvement % per year',sc.traj?sc.imp:0,4]].forEach((k,j)=>{P(5+j,0,k[0]);P(5+j,1,k[1],k[2])});
+ ['Year','a (L/100 km per kg)','c (L/100 km)'].forEach((t,j)=>P(13,j,t,3));
+ YRS.forEach((Y,y)=>{P(14+y,0,Y.l);P(14+y,1,Y.a);P(14+y,2,Y.c,5)});
+ ['Powertrain','Fuel basis','Mass (kg)','Input','Unit','FC factor (L/100 km per unit)','CNF %','v (super-credit)','Eligible tech items','Start share %','End share %'].forEach((t,j)=>P(20,j,t,3));
+ PT.forEach((t,i)=>{const r=21+i,p=sc.props[i];P(r,0,t.n);P(r,1,FUELN[t.fuel]);P(r,2,p.m,4);P(r,3,p.x,4);P(r,4,t.fuel==='elec'?'kWh/100 km':'g CO₂/km');P(r,5,FCX[t.fuel][1],5,FCX[t.fuel][0]);P(r,6,p.cnf,4);P(r,7,p.v,4);P(r,8,nTechSc(sc,i),4);P(r,9,sc.start[i],9);P(r,10,end[i],9)});
+ P(31,8,'Total (must be 100)',1);P(31,9,sum(sc.start),8,'SUM(J21:J30)');P(31,10,sum(end),8,'SUM(K21:K30)');
+ ['Notes','Tech items ticked: '+(sc.techOn&&sc.tech.length?sc.tech.map(t=>TECH[t][0]).join(', '):'none')+'. Eligible items = ticked items that apply to that powertrain (BEVs skip engine-related items).','Shares are % of physical sales; v (super-credit) weights only the average.','Strong hybrid (flex-fuel) CNF 8%: the final notification lists 22.3% only for flex-fuel vehicles. PHEV/REEV use declared weighted CO₂.','Mix moves linearly from start to end share; CO₂ improvement and sales growth compound yearly (assumption).','Generic portfolios, not any manufacturer’s data. Prepared with CAFE III Fleet Explorer by '+AUTHOR+'. Views are personal.'].forEach((t,j)=>P(33+j,0,t,j?0:1));
+ /* Calc */
+ const Cc=[],Q=(r,c,v,s,f)=>Cc.push({r,c,v,s,f});
+ Q(1,0,'Calculation — Gazette formulas (driven by Inputs; do not edit)',2);
+ Q(3,0,'Year',3);YRS.forEach((Y,y)=>Q(3,1+y,Y.l,3));Q(4,0,'Year index');ys.forEach(y=>Q(4,1+y,y));
+ Q(5,0,'Sales mix % (straight line from start to end share)',1);
+ PT.forEach((t,i)=>{const r=6+i,R=21+i;Q(r,0,t.n);ys.forEach(y=>{const L=colName(1+y);Q(r,1+y,mix[y][i],8,`Inputs!$J${R}+(Inputs!$K${R}-Inputs!$J${R})*${L}$4/4`)})});
+ Q(17,0,'Adjusted fuel use, L/100 km = input × FC factor × (1 − improvement)^year × (1 − CNF) − tech credit',1);
+ PT.forEach((t,i)=>{const r=18+i,R=21+i;Q(r,0,t.n);ys.forEach(y=>{const L=colName(1+y);Q(r,1+y,adjSc(sc,i,y),5,`MAX(0,Inputs!$D${R}*Inputs!$F${R}*(1-Inputs!$B$11/100)^${L}$4*(1-Inputs!$G${R}/100)-MIN(Inputs!$I${R}*Inputs!$B$7,Inputs!$B$8))`)})});
+ Q(29,0,'Results',1);
+ const RES=[
+  [30,'Fleet mass W (kg)',r=>r.W,8,L=>`SUMPRODUCT(${L}6:${L}15,Inputs!$C$21:$C$30)/SUM(${L}6:${L}15)`],
+  [31,'a',(r,y)=>YRS[y].a,0,L=>`INDEX(Inputs!$B$14:$B$18,${L}$4+1)`],
+  [32,'c',(r,y)=>YRS[y].c,5,L=>`INDEX(Inputs!$C$14:$C$18,${L}$4+1)`],
+  [33,'Target T (L/100 km)',r=>r.Tr,5,L=>`ROUND(${L}31*(${L}30-Inputs!$B$5)+${L}32,3)`],
+  [34,'Performance P (L/100 km)',r=>r.Pr,5,L=>`ROUND(SUMPRODUCT(${L}6:${L}15,Inputs!$H$21:$H$30,${L}18:${L}27)/SUMPRODUCT(${L}6:${L}15,Inputs!$H$21:$H$30),3)`],
+  [35,'Gap T − P (L/100 km)',r=>r.gL,5,L=>`ROUND(${L}33-${L}34,3)`],
+  [36,'Target (g CO₂/km)',r=>r.Tr*K,8,L=>`${L}33*Inputs!$B$6`],
+  [37,'Performance (g CO₂/km)',r=>r.Pr*K,8,L=>`${L}34*Inputs!$B$6`],
+  [38,'Gap (g CO₂/km)',r=>r.gG,8,L=>`${L}35*Inputs!$B$6`],
+  [39,'Sales (vehicles)',r=>r.n,6,L=>`Inputs!$B$9*(1+Inputs!$B$10/100)^${L}$4`],
+  [40,'Passbook entry (g·veh)',r=>r.bal,6,L=>`${L}38*${L}39`],
+  [41,'Status',r=>r.gL>=0?'Complies':'Shortfall',0,L=>`IF(${L}35>=0,"Complies","Shortfall")`],
+  [46,'Credit (g CO₂/km)',r=>Math.max(0,r.gG),8,L=>`MAX(0,${L}38)`],
+  [47,'Debit (g CO₂/km)',r=>Math.min(0,r.gG),8,L=>`MIN(0,${L}38)`]];
+ RES.forEach(([r,lab,fv,st,ff])=>{Q(r,0,lab);ys.forEach(y=>{const L=colName(1+y);Q(r,1+y,fv(run.ys[y],y),st,ff(L))})});
+ Q(43,0,'Block 1 net, '+BLK[0]+' (g·veh)',1);Q(43,1,run.b1,6,'SUM(B40:D40)');Q(43,2,run.b1>=0?'Net credit':'Net debit',0,'IF(B43>=0,"Net credit","Net debit")');
+ Q(45,0,'Chart helpers',1);Q(44,0,'Block 2 net, '+BLK[1]+' (g·veh)',1);Q(44,1,run.b2,6,'SUM(E40:F40)');Q(44,2,run.b2>=0?'Net credit':'Net debit',0,'IF(B44>=0,"Net credit","Net debit")');
+ /* Charts sheet */
+ const G=[{r:1,c:0,v:'Charts — linked to Calc; they update when you edit Inputs',s:2}];
+ const cats=YRS.map(Y=>Y.l),cr='Calc!$B$3:$F$3',rowRef=r=>`Calc!$B$${r}:$F$${r}`;
+ const ch1=chartXml({type:'line',title:'Target vs fleet performance',yTitle:'L/100 km (petrol-equivalent)',fmt:'0.000',catRef:cr,cats,series:[{name:'Target T (L/100 km)',nameRef:'Calc!$A$33',ref:rowRef(33),vals:run.ys.map(r=>r.Tr),color:'0F172A'},{name:'Performance P (L/100 km)',nameRef:'Calc!$A$34',ref:rowRef(34),vals:run.ys.map(r=>r.Pr),color:'0B5CAD'}]});
+ const ch2=chartXml({type:'bar',title:'Gap to target (positive = complies)',yTitle:'g CO₂/km',fmt:'0.0;-0.0;;',labels:true,catRef:cr,cats,overlap:true,series:[{name:'Credit (g CO₂/km)',nameRef:'Calc!$A$46',ref:rowRef(46),vals:run.ys.map(r=>Math.max(0,r.gG)),color:'15803D'},{name:'Debit (g CO₂/km)',nameRef:'Calc!$A$47',ref:rowRef(47),vals:run.ys.map(r=>Math.min(0,r.gG)),color:'C81E1E'}]});
+ const act=PT.map((t,i)=>i).filter(i=>sc.start[i]>0||end[i]>0);
+ const ch3=chartXml({type:'bar',stacked:true,title:'Sales mix by year',yTitle:'Share of sales',fmt:'0%',catRef:cr,cats,series:act.map(i=>({name:PT[i].n,nameRef:`Calc!$A$${6+i}`,ref:rowRef(6+i),vals:ys.map(y=>mix[y][i]),color:PT[i].col.slice(1).toUpperCase()}))});
+ const ch4=chartXml({type:'bar',title:'Passbook entry by year',yTitle:'g·veh',fmt:'#,##0',catRef:cr,cats,series:[{name:'Passbook entry (g·veh)',nameRef:'Calc!$A$40',ref:rowRef(40),vals:run.ys.map(r=>r.bal),color:'0B5CAD'}]});
+ const drawing=XH+`<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="${NS_R}">${anchor(1,0,2,9,22)}${anchor(2,9,2,18,22)}${anchor(3,0,23,9,44)}${anchor(4,9,23,18,44)}</xdr:wsDr>`;
+ /* Scenarios sheet (static) */
+ const Z=[],Zp=(r,c,v,s)=>Z.push({r,c,v,s});
+ Zp(1,0,'Scenario results (static values at export time)',2);
+ const hdr=['Scenario','Year','Fleet mass kg','Target L/100 km','Target g/km','Performance L/100 km','Performance g/km','Gap L/100 km','Gap g/km','Sales','Passbook g·veh','Status'];hdr.forEach((t,j)=>Zp(3,j,t,3));
+ let zr=4;const list=[{n:sc.name+' (current)',sc}].concat(saved.map(s=>({n:s.name,sc:s})),PRESC.map((p,i)=>({n:PRE[i].n+' (preset)',sc:p})));
+ list.forEach(o=>{const rr=runSc(o.sc);rr.ys.forEach(r=>{[o.n,'FY '+YRS[r.y].l,r.W,r.Tr,r.Tr*K,r.Pr,r.Pr*K,r.gL,r.gG,r.n,r.bal,r.gL>=0?'Complies':'Shortfall'].forEach((v,j)=>Zp(zr,j,v,[0,0,8,5,8,5,8,5,8,6,6,0][j]));zr++});
+  Zp(zr,0,o.n);Zp(zr,1,'Block 1 net',1);Zp(zr,10,rr.b1,6);Zp(zr,11,rr.b1>=0?'Net credit':'Net debit');zr++;
+  Zp(zr,0,o.n);Zp(zr,1,'Block 2 net',1);Zp(zr,10,rr.b2,6);Zp(zr,11,rr.b2>=0?'Net credit':'Net debit');zr+=2});
+ const styles=XH+`<styleSheet xmlns="${NS_M}"><numFmts count="4"><numFmt numFmtId="164" formatCode="0.000"/><numFmt numFmtId="165" formatCode="#,##0"/><numFmt numFmtId="166" formatCode="0.0"/><numFmt numFmtId="167" formatCode="0.00"/></numFmts><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="14"/><name val="Calibri"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFF4CC"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE7F0FB"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="10"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="1" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="2" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="165" fontId="0" fillId="2" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="166" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="167" fontId="0" fillId="2" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+ const sheets=['Inputs','Calc','Charts','Scenarios'];
+ const files=[
+  {name:'[Content_Types].xml',data:XH+`<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${sheets.map((_,k)=>`<Override PartName="/xl/worksheets/sheet${k+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>${[1,2,3,4].map(n=>`<Override PartName="/xl/charts/chart${n}.xml" ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/>`).join('')}</Types>`},
+  {name:'_rels/.rels',data:XH+`<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${NS_R}/officeDocument" Target="xl/workbook.xml"/></Relationships>`},
+  {name:'xl/workbook.xml',data:XH+`<workbook xmlns="${NS_M}" xmlns:r="${NS_R}"><bookViews><workbookView activeTab="2"/></bookViews><sheets>${sheets.map((n,k)=>`<sheet name="${n}" sheetId="${k+1}" r:id="rId${k+1}"/>`).join('')}</sheets><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>`},
+  {name:'xl/_rels/workbook.xml.rels',data:XH+`<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((_,k)=>`<Relationship Id="rId${k+1}" Type="${NS_R}/worksheet" Target="worksheets/sheet${k+1}.xml"/>`).join('')}<Relationship Id="rId9" Type="${NS_R}/styles" Target="styles.xml"/></Relationships>`},
+  {name:'xl/styles.xml',data:styles},
+  {name:'xl/worksheets/sheet1.xml',data:sheetXml(I,[34,14,11,10,12,16,9,11,12,12,12])},
+  {name:'xl/worksheets/sheet2.xml',data:sheetXml(Cc,[62,13,13,13,13,13])},
+  {name:'xl/worksheets/sheet3.xml',data:sheetXml(G,null,true)},
+  {name:'xl/worksheets/_rels/sheet3.xml.rels',data:XH+`<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${NS_R}/drawing" Target="../drawings/drawing1.xml"/></Relationships>`},
+  {name:'xl/worksheets/sheet4.xml',data:sheetXml(Z,[34,12,12,14,12,18,16,13,11,12,15,12])},
+  {name:'xl/drawings/drawing1.xml',data:drawing},
+  {name:'xl/drawings/_rels/drawing1.xml.rels',data:XH+`<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${[1,2,3,4].map(n=>`<Relationship Id="rId${n}" Type="${NS_R}/chart" Target="../charts/chart${n}.xml"/>`).join('')}</Relationships>`},
+  {name:'xl/charts/chart1.xml',data:ch1},{name:'xl/charts/chart2.xml',data:ch2},{name:'xl/charts/chart3.xml',data:ch3},{name:'xl/charts/chart4.xml',data:ch4}];
+ return zipBlob(files,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+}
+
+/* ============ self-check (private) ============ */
+function selfCheck(){
+ if(!PRIV)return;const res=[];
+ const mk=()=>({name:'t',pi:0,sales:1e5,start:PT.map(()=>0),end:null,traj:false,imp:0,gr:0,props:PT.map(()=>({m:B,x:100,cnf:0,v:1})),tech:[],techOn:false});
+ const T=(name,got,exp,tol=1e-4)=>res.push([name,Math.abs(got-exp)<=tol,got]);
+ let t=mk();t.start[0]=100;YRS.forEach((Y,y)=>T(`T at W=1229 equals c (FY ${Y.l})`,calcSc(t,y).T,Y.c));
+ T('Petrol 100 g/km → 4.217 L',adjSc(t,0,0),4.217);
+ T('Diesel 100 g/km → 0.03776×100×1.1168',adjSc(t,1,0),4.2170368);
+ T('CNG 100 g/km → 0.03647×100×1.1563',adjSc(t,2,0),4.2170261);
+ t.props[IDX.bev].x=15;T('BEV 15 kWh/100 km → 1.542 L',adjSc(t,IDX.bev,0),1.542);
+ t.techOn=true;t.tech=TECH.map((_,k)=>k);T('12 techs capped at 0.3795 L (9 g)',ciSc(t,0),CAP);
+ t=mk();t.props[0].x=4/.04217;t.props[IDX.bev].x=1/.1028;t.props[IDX.bev].v=3;t.start[0]=50;t.start[IDX.bev]=50;
+ T('50/50 petrol 4.0 & BEV 1.0 with v=3 → 1.750',calcSc(t,0).P,1.75);
+ t=mk();t.props[0].cnf=8;T('E20 CNF 8% on 100 g → 3.880 L',adjSc(t,0,0),4.217*.92);
+ t=mk();t.start[0]=100;t.end=PT.map(()=>0);t.end[IDX.bev]=100;t.traj=true;t.imp=10;t.gr=5;
+ T('Plan: FY 2029-30 mix is 50/50',mixSc(t,2)[0],50);
+ T('Plan: 10% CO₂ improvement → 0.9 × 4.217 in year 2',adjSc(t,0,1),4.217*.9);
+ T('Plan: 5% sales growth → 1.1025× in year 3',salesSc(t,2),110250,1e-6);
+ const r=calcSc(t,0);T('Passbook = gap g/km × sales',r.bal,r.gG*r.n,1e-6);
+ const ok=res.filter(r=>r[1]).length;
+ $('#checks').innerHTML=`<p class="chk"><b class="${ok===res.length?'good':'bad'}">${ok}/${res.length} passed</b></p>`+res.map(r=>`<p class="chk"><span class="${r[1]?'good':'bad'}">${r[1]?'✓':'✗'}</span> ${esc(r[0])} <span class="mut">(${(+r[2]).toFixed(4)})</span></p>`).join('');
+}
+
+/* ============ init ============ */
+$('#preset').innerHTML=PRE.map((p,i)=>`<option value="${i}">${esc(p.n)}</option>`).join('');
+$('#years').innerHTML=YRS.map((Y,y)=>`<button type="button" data-y="${y}" title="FY ${Y.l}">${Y.l}</button>`).join('');
+$('#sweep').innerHTML=PT.map((t,i)=>`<option value="${i}">${esc(t.n)}</option>`).join('');
+$('#preset').addEventListener('change',e=>setScenario(scFromPreset(+e.target.value)));
+$('#years').addEventListener('click',e=>{const b=e.target.closest('button');if(b){U.year=+b.dataset.y;update()}});
+$('#sweep').addEventListener('change',e=>{U.sweep=+e.target.value;update()});
+$('#addpt').addEventListener('change',e=>{const v=e.target.value;if(v!==''){addPt(+v);setMsg(`${PT[+v].n} added at 0%.`);update()}});
+$('#sales').addEventListener('change',e=>{const v=Math.round(+e.target.value);if(v>=1000){S.sales=v;update()}else e.target.value=Math.round(S.sales)});
+$('#techOn').addEventListener('change',e=>{S.techOn=e.target.checked;update()});
+$('#trajOn').addEventListener('change',e=>{S.traj=e.target.checked;if(S.traj){if(!S.end)S.end=S.start.slice();U.edit='end';setMsg('Year-wise plan on. Sliders now set the FY 2031-32 mix.')}else{U.edit='start';setMsg('Year-wise plan off.')}U.vis=visFrom(S);buildRows();buildAdd();update()});
+$('#editSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(b){U.edit=b.dataset.e;update()}});
+const numIn=(id,key,lo,hi)=>$(id).addEventListener('change',e=>{const v=parseFloat(e.target.value);if(isFinite(v)){S[key]=clamp(v,lo,hi);e.target.value=S[key];update()}else e.target.value=S[key]});
+numIn('#imp','imp',0,10);numIn('#gr','gr',-20,30);
+$('#chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(b)act(b.dataset.a)});
+$('#reset').addEventListener('click',()=>setScenario(scFromPreset(S.pi)));
+$('#cands').addEventListener('click',e=>{const b=e.target.closest('.cand');if(!b)return;const k=b.dataset.k;
+ if(U.cmp.has(k))U.cmp.delete(k);else{if(U.cmp.size>=4){$('#cmpMsg').textContent='Up to 4 at a time. Deselect one first.';return}U.cmp.add(k)}$('#cmpMsg').textContent='';renderCompare()});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-png]');if(b)chartPng(b.dataset.png,b.dataset.title)});
+$('#pdf').addEventListener('click',printReport);
+if(PRIV){
+ $('#poolOn').addEventListener('change',e=>{U.pool=e.target.checked;renderCompare()});
+ $('#xlsx').addEventListener('click',()=>{try{download(buildXlsx(),`cafe3-${slug(S.name)}.xlsx`)}catch(err){setMsg('Excel export failed: '+err.message)}});
+ $('#scSave').addEventListener('click',()=>{const name=$('#scName').value.trim()||`${PRE[S.pi].n} · ${new Date().toLocaleDateString('en-IN')}`;const sc=cloneSc(S);sc.name=name;sc.id=newId();saved.push(sc);S.name=name;const ok=persist();$('#scName').value='';smsg(ok?`Saved “${name}”.`:`Saved for this session only (browser storage unavailable).`);renderSaved();update()});
+ $('#slist').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const id=b.closest('.sitem').dataset.id,k=saved.findIndex(s=>s.id===id);if(k<0)return;const s=saved[k];
+  if(b.dataset.op==='load'){setScenario(cloneSc(s));smsg(`Loaded “${s.name}”.`)}
+  if(b.dataset.op==='dup'){const d=cloneSc(s);d.id=newId();d.name=s.name+' (copy)';saved.splice(k+1,0,d);persist();smsg(`Copied “${s.name}”.`)}
+  if(b.dataset.op==='del'){saved.splice(k,1);U.cmp.delete('s'+id);persist();smsg(`Deleted “${s.name}”.`)}
+  renderSaved();renderCompare()});
+}
+const THEMES=['auto','light','dark'];let th='auto';
+try{th=localStorage.getItem('cafe3-theme')||'auto'}catch(e){}
+function applyTheme(){const r=document.documentElement;th==='auto'?r.removeAttribute('data-theme'):r.setAttribute('data-theme',th);$('#theme').textContent='Theme: '+th[0].toUpperCase()+th.slice(1);if(S)update()}
+$('#theme').addEventListener('click',()=>{th=THEMES[(THEMES.indexOf(th)+1)%3];try{localStorage.setItem('cafe3-theme',th)}catch(e){}applyTheme()});
+applyTheme();
+let raf=0,lastW=0;const ro=new ResizeObserver(()=>{const w=$('.app').clientWidth;if(w===lastW)return;lastW=w;cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{if(S)update()})});
+setScenario(scFromPreset(0));renderSaved();selfCheck();ro.observe($('.app'));
+window.__cafe={buildXlsx,buildReport,get S(){return S},U,runSc};
+})();
+</script>
+</body>
+</html>
